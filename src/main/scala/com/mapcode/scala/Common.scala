@@ -25,8 +25,8 @@ object Common {
    * @return Divider.
    */
   def xDivider(minY: Int, maxY: Int): Int = {
-    require(minY < 0 || minY <= 89653248, s"minY ($minY) out of range <= 89653248]")
-    require(maxY >= -89653248, s"maxY ($maxY) out of range [-89653248,...]")
+    require(minY < 0 || minY <= (0xAB << 19), s"minY ($minY) out of range <= 89653248]")
+    require(maxY >= -(0xAB << 19), s"maxY ($maxY) out of range [-89653248,...]")
     if (minY >= 0) xDivider19(minY >> 19)
     else if (maxY >= 0) xDivider19(0)
     else xDivider19((-maxY) >> 19)
@@ -35,15 +35,6 @@ object Common {
   def countCityCoordinatesForCountry(sameCodex: Int, index: Int, firstCode: Int): Int =
     Stream.from(index, step = 1).takeWhile(e => Data.calcCodex(e) == sameCodex).last -
       getFirstNamelessRecord(sameCodex, index, firstCode)
-
-  def countCityCoordinatesForCountry2(sameCodex: Int, index: Int, firstCode: Int): Int = {
-    val i: Int = getFirstNamelessRecord(sameCodex, index, firstCode)
-    var e: Int = index
-    while (Data.calcCodex(e) == sameCodex) {
-      e += 1
-    }
-    e - i
-  }
 
   def getFirstNamelessRecord(sameCodex: Int, index: Int, firstCode: Int): Int =
     Stream.from(index, step = -1).takeWhile(i => i >= firstCode &&

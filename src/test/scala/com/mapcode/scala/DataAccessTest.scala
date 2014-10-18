@@ -151,8 +151,8 @@ class DataAccessTest extends FunSuite with Matchers with GeneratorDrivenProperty
   }
 
   test("asLong") {
-    an [IllegalArgumentException] should be thrownBy DataAccess.asLong(-1)
-    an [IllegalArgumentException] should be thrownBy DataAccess.asLong(DataAccess.FILE_DATA.length)
+    an[IllegalArgumentException] should be thrownBy DataAccess.asLong(-1)
+    an[IllegalArgumentException] should be thrownBy DataAccess.asLong(DataAccess.FILE_DATA.length)
 
     DataAccess.asLong(65433) should equal(1258453938)
     DataAccess.asLong(134103) should equal(-1655799296)
@@ -256,6 +256,8 @@ class DataAccessTest extends FunSuite with Matchers with GeneratorDrivenProperty
   }
 
   test("smartDiv") {
+    an[IllegalArgumentException] should be thrownBy DataAccess.smartDiv(-1)
+    an[IllegalArgumentException] should be thrownBy DataAccess.smartDiv(DataAccess.FILE_DATA.length / 20 + 1)
     DataAccess.smartDiv(0) should equal(1)
     DataAccess.smartDiv(1) should equal(1290)
     DataAccess.smartDiv(1972) should equal(961)
@@ -298,4 +300,29 @@ class DataAccessTest extends FunSuite with Matchers with GeneratorDrivenProperty
     DataAccess.smartDiv(11053) should equal(113)
     DataAccess.smartDiv(8082) should equal(176)
   }
+
+  test("dataFirstRecord") {
+    an [IllegalArgumentException] should be thrownBy DataAccess.dataFirstRecord(-1)
+    an [IllegalArgumentException] should be thrownBy DataAccess.dataFirstRecord(DataAccess.DATA_START.length)
+    val generator = Gen.choose(0, DataAccess.DATA_START.length - 1)
+    forAll(generator) {
+      code: Int =>
+        DataAccess.dataFirstRecord(code) should equal(DataAccess.DATA_START(code))
+    }
+  }
+
+  test("dataLastRecord") {
+    an [IllegalArgumentException] should be thrownBy DataAccess.dataLastRecord(-2)
+    an [IllegalArgumentException] should be thrownBy DataAccess.dataLastRecord(DataAccess.DATA_START.length - 1)
+    val generator = Gen.choose(0, DataAccess.DATA_START.length - 1)
+    forAll(generator) {
+      code: Int =>
+        DataAccess.dataLastRecord(code - 1) should equal(DataAccess.dataFirstRecord(code) - 1)
+    }
+  }
+
+  test("numberOfSubAreas") {
+    DataAccess.numberOfSubAreas should equal(DataAccess.DATA_START(DataAccess.DATA_START.length - 1))
+  }
+
 }

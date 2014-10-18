@@ -20,3 +20,10 @@ libraryDependencies ++= Seq(
   "org.scalacheck" %% "scalacheck" % "1.11.6" % "test"
 )
 
+instrumentSettings
+
+ScoverageKeys.excludedPackages in ScoverageCompile := 
+	"com\\.mapcode\\.scala\\.Territory"
+
+ScoverageKeys.highlighting := true
+

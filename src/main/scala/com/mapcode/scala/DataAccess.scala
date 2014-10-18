@@ -45,9 +45,15 @@ private[scala] object DataAccess {
     asUnsignedByte((i * 20) + 18) + (asUnsignedByte((i * 20) + 19) * 256)
   }
 
-  def dataFirstRecord(ccode: Int): Int = DATA_START(ccode)
+  def dataFirstRecord(ccode: Int): Int = {
+    require(ccode >= 0 && ccode < DATA_START.length, s"ccode $ccode is out of range [0, ${DATA_START.length})")
+    DATA_START(ccode)
+  }
 
-  def dataLastRecord(ccode: Int): Int = DATA_START(ccode + 1) - 1
+  def dataLastRecord(ccode: Int): Int = {
+    require(ccode >= -1 && ccode < DATA_START.length - 1, s"ccode $ccode is out of range [-1, ${DATA_START.length - 1})")
+    DATA_START(ccode + 1) - 1
+  }
 
   lazy val numberOfSubAreas: Int = DATA_START.last
 
@@ -60,7 +66,7 @@ private[scala] object DataAccess {
     }
   }
 
-  private val DATA_START = Array[Int](
+  private[scala] val DATA_START = Array[Int](
     0, 3, 6, 9, 13, 16, 18, 19, 30, 31, 33, 35, 37, 42, 44, 47, 51, 54, 56, 58, 60, 62, 64, 68, 71, 79, 81, 116,
     121, 131, 133, 135, 138, 143, 155, 159, 165, 167, 169, 173, 176, 183, 185, 187, 189, 193, 195, 202, 208, 212,
     216, 219, 221, 223, 250, 252, 259, 261, 266, 284, 288, 292, 296, 298, 303, 311, 315, 325, 327, 332, 336,

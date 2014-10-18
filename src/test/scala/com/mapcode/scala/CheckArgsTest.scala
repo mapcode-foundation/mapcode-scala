@@ -41,4 +41,9 @@ class CheckArgsTest extends FunSuite with Matchers with GeneratorDrivenPropertyC
       }
     }
   }
+
+  test("non-null") {
+    CheckArgs.checkNonnull("", None)
+    an [IllegalArgumentException] should be thrownBy CheckArgs.checkNonnull("", null)
+  }
 }
