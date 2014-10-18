@@ -15,9 +15,9 @@
  */
 package com.mapcode.scala
 
-import java.util.Random
-
 import com.mapcode.scala.CheckArgs.checkNonnull
+
+import scala.util.Random
 
 /**
  * This class defines a class for lat/lon points.
@@ -42,17 +42,10 @@ private[scala] object Point {
   def fromMicroDeg(latMicroDeg: Int, lonMicroDeg: Int): Point =
     new Point(microDegToDeg(latMicroDeg), microDegToDeg(lonMicroDeg))
 
-  def degToMicroDeg(deg: Double): Int = Math.round(deg * MICRODEG_TO_DEG_FACTOR).asInstanceOf[Int]
+  def degToMicroDeg(deg: Double): Int = math.round(deg * MICRODEG_TO_DEG_FACTOR).asInstanceOf[Int]
 
   def microDegToDeg(microDeg: Int): Double = microDeg.asInstanceOf[Double] / MICRODEG_TO_DEG_FACTOR
 
-  def restrictLatLon(point: Point): Point = {
-    if (point.isDefined) {
-      val latDeg: Double = Math.max(Math.min(LAT_DEG_MAX, point.latDeg), LAT_DEG_MIN)
-      val lonDeg: Double = Math.max(Math.min(LON_DEG_MAX, point.lonDeg), LON_DEG_MIN)
-      new Point(latDeg, lonDeg)
-    } else point
-  }
 
   /**
    * Create a random point, uniformly distributed over the surface of the Earth.
@@ -62,50 +55,28 @@ private[scala] object Point {
    */
   def fromUniformlyDistributedRandomPoints(randomGenerator: Random): Point = {
     checkNonnull("randomGenerator", randomGenerator)
-    val unitRand1 = randomGenerator.nextDouble
-    val unitRand2 = randomGenerator.nextDouble
-    val theta0 = (2.0 * Math.PI) * unitRand1
-    val theta1 = Math.acos(1.0 - (2.0 * unitRand2))
-    val x = Math.sin(theta0) * Math.sin(theta1)
-    val y = Math.cos(theta0) * Math.sin(theta1)
-    val z = Math.cos(theta1)
-    val latRad = Math.asin(z)
-    val lonRad = Math.atan2(y, x)
-    val lat = if (latRad != latRad) 90.0 else latRad * (180.0 / Math.PI)
-    val lon = if (lonRad != lonRad) 180.0 else lonRad * (180.0 / Math.PI)
+    val unitRand1 = randomGenerator.nextDouble()
+    val unitRand2 = randomGenerator.nextDouble()
+    val theta0 = (2.0 * math.Pi) * unitRand1
+    val theta1 = math.acos(1.0 - (2.0 * unitRand2))
+    val x = math.sin(theta0) * math.sin(theta1)
+    val y = math.cos(theta0) * math.sin(theta1)
+    val z = math.cos(theta1)
+    val latRad = math.asin(z)
+    val lonRad = math.atan2(y, x)
+    val lat = latRad.toDegrees
+    val lon = lonRad.toDegrees
     fromMicroDeg(degToMicroDeg(lat), degToMicroDeg(lon))
   }
 
-  /**
-   * Calculate the distance between two points. This algorithm does not take the curvature of the Earth into
-   * account, so it only works for small distance up to, say 200 km, and not too close to the poles.
-   *
-   * @param p1 Point 1.
-   * @param p2 Point 2.
-   * @return Straight distance between p1 and p2. Only accurate for small distances up to 200 km.
-   */
-  def distanceInMeters(p1: Point, p2: Point): Double = {
-    val (from, to) =
-      if (p1.lonDeg <= p2.lonDeg) (p1, p2)
-      else (p2, p1)
-
-    val avgLat = from.latDeg + ((to.latDeg - from.latDeg) / 2.0)
-    val deltaLonDeg360 = Math.abs(to.lonDeg - from.lonDeg)
-    val deltaLonDeg = if (deltaLonDeg360 <= 180.0) deltaLonDeg360 else 360.0 - deltaLonDeg360
-    val deltaLatDeg = Math.abs(to.latDeg - from.latDeg)
-    val deltaXMeters = degreesLonToMetersAtLat(deltaLonDeg, avgLat)
-    val deltaYMeters = degreesLatToMeters(deltaLatDeg)
-    val lenMeters = Math.sqrt((deltaXMeters * deltaXMeters) + (deltaYMeters * deltaYMeters))
-    lenMeters
-  }
 
   def degreesLatToMeters(latDegrees: Double): Double = latDegrees * METERS_PER_DEGREE_LAT
 
   def degreesLonToMetersAtLat(lonDegrees: Double, lat: Double): Double =
-    lonDegrees * METERS_PER_DEGREE_LON_EQUATOR * Math.cos(Math.toRadians(lat))
+    lonDegrees * METERS_PER_DEGREE_LON_EQUATOR * math.cos(math.toRadians(lat))
 
   def metersToDegreesLonAtLat(eastMeters: Double, lat: Double): Double =
-    (eastMeters / METERS_PER_DEGREE_LON_EQUATOR) / Math.cos(Math.toRadians(lat))
+    (eastMeters / METERS_PER_DEGREE_LON_EQUATOR) / math.cos(math.toRadians(lat))
 
   /**
    * Create an undefined points. No latitude or longitude can be obtained from it.
@@ -126,8 +97,8 @@ private[scala] object Point {
   val MICRODEG_TO_DEG_FACTOR: Double = 1000000.0
   val EARTH_RADIUS_X_METERS: Double = 6378137.0
   val EARTH_RADIUS_Y_METERS: Double = 6356752.3
-  val EARTH_CIRCUMFERENCE_X: Double = EARTH_RADIUS_X_METERS * 2.0 * Math.PI
-  val EARTH_CIRCUMFERENCE_Y: Double = EARTH_RADIUS_Y_METERS * 2.0 * Math.PI
+  val EARTH_CIRCUMFERENCE_X: Double = EARTH_RADIUS_X_METERS * 2.0 * math.Pi
+  val EARTH_CIRCUMFERENCE_Y: Double = EARTH_RADIUS_Y_METERS * 2.0 * math.Pi
   val METERS_PER_DEGREE_LAT: Double = EARTH_CIRCUMFERENCE_Y / 360.0
   val METERS_PER_DEGREE_LON_EQUATOR: Double = EARTH_CIRCUMFERENCE_X / 360.0
 }
@@ -152,6 +123,46 @@ case class Point(latDeg: Double, lonDeg: Double) {
    *
    * @return True if defined. If false, no lat/lon is available.
    */
-  private[mapcode] def isDefined: Boolean = this == undefined
+  private[mapcode] def isDefined: Boolean = this != undefined
+
+  def normalize: Point = {
+    if (isDefined) {
+      def clamp(min: Double, max: Double, value: Double) = math.max(math.min(max, value), min)
+      Point(clamp(LAT_DEG_MIN, LAT_DEG_MAX, latDeg), clamp(LON_DEG_MIN, LON_DEG_MAX, lonDeg))
+    } else this
+  }
+
+  /** Distance between two points on the unit sphere. */
+  def unitDistanceBetween(p: Point): Double = {
+    // adapted from http://www.movable-type.co.uk/scripts/latlong.html
+    val φ1 = this.latDeg.toRadians
+    val φ2 = p.latDeg.toRadians
+    val Δφ = (p.latDeg - this.latDeg).toRadians
+    val Δλ = (p.lonDeg - this.lonDeg).toRadians
+
+    val a = math.sin(Δφ/2) * math.sin(Δφ/2) + math.cos(φ1) * math.cos(φ2) * math.sin(Δλ/2) * math.sin(Δλ/2)
+    2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+  }
+
+  /**
+   * Calculate the distance between two points. This algorithm does not take the curvature of the Earth into
+   * account, so it only works for small distance up to, say 200 km, and not too close to the poles.
+   *
+   * @param p2 Point 2.
+   * @return Straight distance between p1 and p2. Only accurate for small distances up to 200 km.
+   */
+  def distanceInMeters(p2: Point): Double = {
+    val (from, to) =
+      if (this.lonDeg <= p2.lonDeg) (this, p2)
+      else (p2, this)
+
+    val avgLat = from.latDeg + ((to.latDeg - from.latDeg) / 2.0)
+    val deltaLonDeg360 = math.abs(to.lonDeg - from.lonDeg)
+    val deltaLonDeg = if (deltaLonDeg360 <= 180.0) deltaLonDeg360 else 360.0 - deltaLonDeg360
+    val deltaLatDeg = math.abs(to.latDeg - from.latDeg)
+    val deltaXMeters = degreesLonToMetersAtLat(deltaLonDeg, avgLat)
+    val deltaYMeters = degreesLatToMeters(deltaLatDeg)
+    math.sqrt((deltaXMeters * deltaXMeters) + (deltaYMeters * deltaYMeters))
+  }
 }
 
