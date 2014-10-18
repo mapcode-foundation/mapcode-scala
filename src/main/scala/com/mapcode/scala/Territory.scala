@@ -32,9 +32,13 @@ object Territory extends Enumeration {
 
   final case class Territory(territoryCode: Int,
                              fullName: String,
-                             parentTerritory: Option[ParentTerritory.ParentTerritory] = None,
+                             parentTerritory: Option[Territory] = None,
                              aliases: Array[String] = Array.empty,
                              fullNameAliases: Array[String] = Array.empty) extends Val(territoryCode) {
+
+    parentTerritory.foreach(pt => require(ParentTerritory.values.contains(pt),
+      s"$pt is not a valid parent territory (not one of ${ParentTerritory.values}"))
+
     def name = toString().replaceAll("_", "-")
 
     /**
@@ -58,7 +62,7 @@ object Territory extends Enumeration {
 
     def isState: Boolean = parentTerritory.isDefined
 
-    def hasStates: Boolean = parentSet.contains(this)
+    def hasStates: Boolean = ParentTerritory.values.contains(this)
   }
 
   val USA = Territory(409, "USA", None, Array("US"), Array("United States of America", "America"))
@@ -608,13 +612,14 @@ object Territory extends Enumeration {
   def fromTerritoryCode(territoryCode: Int): Option[Territory] = codeList.get(territoryCode)
 
   @throws[UnknownTerritoryException]
-  def fromString(name: String, parentTerritory: Option[ParentTerritory.ParentTerritory] = None): Territory =
+  def fromString(name: String, parentTerritory: Option[Territory] = None): Territory =
     createFromString(name, parentTerritory)
 
   @throws[UnknownTerritoryException]
-  def createFromString(name: String, parentTerritory: Option[ParentTerritory.ParentTerritory]): Territory = {
+  def createFromString(name: String, parentTerritory: Option[Territory]): Territory = {
+    parentTerritory.foreach(pt => require(ParentTerritory.values.contains(pt)))
     val trimmed = name.trim
-    (nameMap.get(trimmed), parentTerritory.map(_.territory)) match {
+    (nameMap.get(trimmed), parentTerritory) match {
       case (Some(terrs), None) => terrs.head
       case (Some(terrs), parent@Some(_)) =>
         territories.find(_.parentTerritory == parent).getOrElse(throw new UnknownTerritoryException(trimmed))
@@ -629,7 +634,6 @@ object Territory extends Enumeration {
   // private implementation
 
   private val codeList: Map[Int, Territory] = territories.map(t => t.id -> t).toMap
-  private val parentSet = territories.flatMap(_.parentTerritory).toSet.map((p: ParentTerritory.ParentTerritory) => p.territory)
   private val nameMap: Map[String, Seq[Territory]] = null
 
   private[scala] def addNameWithParentVariants(nameMap: Map[String, Seq[Territory]],
@@ -642,7 +646,7 @@ object Territory extends Enumeration {
       val result2 = addName(result, childTerritoryName, territory)
       territory.parentTerritory match {
         case Some(parent) =>
-          val nameVariant = parent.territory.name + '-' + childTerritoryName
+          val nameVariant = parent.name + '-' + childTerritoryName
 
           val result3 = if (nameVariant != name) {
             // Add the variant using the primary parent name.
@@ -650,7 +654,7 @@ object Territory extends Enumeration {
           } else result2
 
           // Add each variant using the parent alias names.
-          parent.territory.aliases.map(_ + '-' + childTerritoryName).filterNot(_ == name).foldLeft(result3) {
+          parent.aliases.map(_ + '-' + childTerritoryName).filterNot(_ == name).foldLeft(result3) {
             case (nameMp, nameV) => addNameWithSeparatorVariants(nameMp, nameV, territory)
           }
         case None => result2

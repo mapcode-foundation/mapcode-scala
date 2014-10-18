@@ -19,18 +19,16 @@ package com.mapcode.scala
 /**
  * This class defines "parent territories" for territories that have multiple territory codes.
  */
-object ParentTerritory extends Enumeration {
-  import Territory.{Territory => Ter}
+object ParentTerritory {
+  val IND = Territory.IND
+  val AUS = Territory.AUS
+  val BRA = Territory.BRA
+  val USA = Territory.USA
+  val MEX = Territory.MEX
+  val CAN = Territory.CAN
+  val RUS = Territory.RUS
+  val CHN = Territory.CHN
+  val ATA = Territory.ATA
 
-  final case class ParentTerritory(territory: Ter) extends Val
-
-  val IND = ParentTerritory(Territory.IND)
-  val AUS = ParentTerritory(Territory.AUS)
-  val BRA = ParentTerritory(Territory.BRA)
-  val USA = ParentTerritory(Territory.USA)
-  val MEX = ParentTerritory(Territory.MEX)
-  val CAN = ParentTerritory(Territory.CAN)
-  val RUS = ParentTerritory(Territory.RUS)
-  val CHN = ParentTerritory(Territory.CHN)
-  val ATA = ParentTerritory(Territory.ATA)
+  lazy val values = Set(IND, AUS, BRA, USA, MEX, CAN, RUS, CHN, ATA)
 }
