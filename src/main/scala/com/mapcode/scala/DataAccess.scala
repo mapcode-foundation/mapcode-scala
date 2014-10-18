@@ -20,18 +20,30 @@ package com.mapcode.scala
  */
 private[scala] object DataAccess {
 
-  private def asUnsignedByte(i: Int): Int = {
+  def asUnsignedByte(i: Int): Int = {
+    require(i >= 0 && i < FILE_DATA.length, s"asUnsignedByte arg $i is out of range: [0, ${FILE_DATA.length})")
     val u = FILE_DATA(i)
     if (u < 0) u + 256
     else u
   }
 
-  def dataFlags(i: Int): Int = asUnsignedByte((i * 20) + 16) + asUnsignedByte((i * 20) + 17) * 256
+  def dataFlags(i: Int): Int = {
+    require(i >= 0 && i < DataAccess.FILE_DATA.length / 20,
+      s"dataFlags argument $i is out of range [0, ${DataAccess.FILE_DATA.length / 20}})")
+    asUnsignedByte((i * 20) + 16) + asUnsignedByte((i * 20) + 17) * 256
+  }
 
-  def asLong(i: Int): Int =
+  def asLong(i: Int): Int = {
+    require(i >= 0 && i < DataAccess.FILE_DATA.length,
+      s"asLong argument $i is out of range [0, ${DataAccess.FILE_DATA.length}})")
     asUnsignedByte(i) + (asUnsignedByte(i + 1) << 8) + (asUnsignedByte(i + 2) << 16) + (asUnsignedByte(i + 3) << 24)
+  }
 
-  def smartDiv(i: Int): Int = asUnsignedByte((i * 20) + 18) + (asUnsignedByte((i * 20) + 19) * 256)
+  def smartDiv(i: Int): Int = {
+    require(i >= 0 && i < DataAccess.FILE_DATA.length / 20,
+      s"smartDiv argument $i is out of range [0, ${DataAccess.FILE_DATA.length / 20}})")
+    asUnsignedByte((i * 20) + 18) + (asUnsignedByte((i * 20) + 19) * 256)
+  }
 
   def dataFirstRecord(ccode: Int): Int = DATA_START(ccode)
 
@@ -39,8 +51,8 @@ private[scala] object DataAccess {
 
   lazy val numberOfSubAreas: Int = DATA_START.last
 
-  private val FILE_DATA: Array[Byte] = {
-    val source = getClass.getResourceAsStream("/mminfo.dat")
+  private[scala] val FILE_DATA: Array[Byte] = {
+    val source = getClass.getResourceAsStream("/com/mapdata/scala/mminfo.dat")
     try {
       Stream.continually(source.read).takeWhile(_ != -1).map(_.toByte).toArray
     } finally {

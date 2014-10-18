@@ -6,6 +6,8 @@ import org.scalatest.{FunSuite, Matchers}
 
 class CheckArgsTest extends FunSuite with Matchers with GeneratorDrivenPropertyChecks {
 
+  implicit override val generatorDrivenConfig = PropertyCheckConfig(maxDiscarded = 1000)
+
   implicit val rangeGen = for {
     a <- Arbitrary.arbDouble.arbitrary
     b <- Arbitrary.arbDouble.arbitrary if a != b
@@ -34,7 +36,7 @@ class CheckArgsTest extends FunSuite with Matchers with GeneratorDrivenPropertyC
     forAll {
       (value: Double, range: (Double, Double)) => {
         whenever(value >= range._1 && value <= range._2) {
-          CheckArgs.checkRange("", value, range._1, range._2) should be(Unit)
+          CheckArgs.checkRange("", value, range._1, range._2)
         }
       }
     }

@@ -25,6 +25,10 @@ case class SubArea(latRange: Range,
                    parentTerritory: Territory.Territory,
                    subAreaID: Integer)
 
+object SubArea {
+
+}
+
 /*
 object SubArea {
 
