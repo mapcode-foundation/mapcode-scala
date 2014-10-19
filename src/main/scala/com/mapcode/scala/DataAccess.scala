@@ -58,7 +58,7 @@ private[scala] object DataAccess {
   lazy val numberOfSubAreas: Int = DATA_START.last
 
   private[scala] val FILE_DATA: Array[Byte] = {
-    val source = getClass.getResourceAsStream("/com/mapdata/scala/mminfo.dat")
+    val source = getClass.getResourceAsStream("/com/mapcode/scala/mminfo.dat")
     try {
       Stream.continually(source.read).takeWhile(_ != -1).map(_.toByte).toArray
     } finally {

@@ -15,15 +15,14 @@ resolvers += Resolver.mavenLocal
 libraryDependencies ++= Seq(
   "org.slf4j" % "slf4j-api" % "1.7.2",
   "org.slf4j" % "slf4j-log4j12" % "1.7.2" % "test",
-  "com.mapcode" % "mapcode" % "1.40.3-SNAPSHOT" % "test" changing,
+  // "com.mapcode" % "mapcode" % "1.40.3-SNAPSHOT",
   "org.scalatest" %% "scalatest" % "2.2.1" % "test",
   "org.scalacheck" %% "scalacheck" % "1.11.6" % "test"
 )
 
 instrumentSettings
 
-ScoverageKeys.excludedPackages in ScoverageCompile := 
-	"com\\.mapcode\\.scala\\.Territory"
+ScoverageKeys.excludedPackages in ScoverageCompile := "com\\.mapcode\\.scala\\.Territory"
 
 ScoverageKeys.highlighting := true
 

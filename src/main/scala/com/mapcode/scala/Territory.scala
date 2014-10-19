@@ -16,28 +16,25 @@
 package com.mapcode.scala
 
 /**
- * This class defines the available territory codes as used by mapcode.
+ * Enumeration that specifies the format for mapcodes.
  */
-object Territory extends Enumeration {
+object NameFormat extends Enumeration {
+  type NameFormat = Value
+  val International, MinimalUnambiguous, Minimal = Value
+}
 
-  /**
-   * Enumeration that specifies the format for mapcodes.
-   */
-  object NameFormat extends Enumeration {
-    type NameFormat = Value
-    val International, MinimalUnambiguous, Minimal = Value
-  }
+// This is broken out of Territory, because when we run scoverage, it generates a class file too big for the
+// JVM to handle. We've excluded Territory itself from the coverage tests, but it's nice to be able to see
+// coverage for the code in this trait
+trait TerritoryOperations extends Enumeration {
 
-  import com.mapcode.scala.Territory.NameFormat.NameFormat
+  import com.mapcode.scala.NameFormat.NameFormat
 
-  final case class Territory(territoryCode: Int,
-                             fullName: String,
-                             parentTerritory: Option[Territory] = None,
-                             aliases: Array[String] = Array.empty,
-                             fullNameAliases: Array[String] = Array.empty) extends Val(territoryCode) {
-
-    parentTerritory.foreach(pt => require(ParentTerritory.values.contains(pt),
-      s"$pt is not a valid parent territory (not one of ${ParentTerritory.values}"))
+  case class Territory(territoryCode: Int,
+                       fullName: String,
+                       parentTerritory: Option[Territory] = None,
+                       aliases: Array[String] = Array.empty,
+                       fullNameAliases: Array[String] = Array.empty) extends Val {
 
     def name = toString().replaceAll("_", "-")
 
@@ -51,8 +48,8 @@ object Territory extends Enumeration {
       format match {
         case NameFormat.International => name
         case _ =>
-          if (name.contains('_'))  {
-            val shortName = name.dropWhile(_ != '_').tail
+          if (name.contains('-')) {
+            val shortName = name.dropWhile(_ != '-').tail
             if (format == NameFormat.Minimal || nameMap(shortName).size == 1) shortName
             else name
           }
@@ -62,8 +59,76 @@ object Territory extends Enumeration {
 
     def isState: Boolean = parentTerritory.isDefined
 
-    def hasStates: Boolean = ParentTerritory.values.contains(this)
+    def hasStates: Boolean = parentTerritories.contains(this)
+
+    def allNames: Seq[String] = {
+      def spaceDup(name: String): Seq[String] = {
+        if (name.contains('-')) Seq(name, name.replace('-', ' '))
+        else Seq(name)
+      }
+      def generateAliasCombos(name: String): Seq[String] = {
+        val suffix: Option[String] = if (name.contains("-")) Some(name.dropWhile(_ != '-').tail) else None
+        val parentVariant: Option[String] = for (sfx <- suffix; par <- parentTerritory.map(_.name)) yield s"$par-$sfx"
+        Seq(name) ++ suffix.toList ++ parentVariant.toList
+      }
+
+      (generateAliasCombos(name).flatMap(spaceDup) ++
+        Seq(fullName) ++
+        aliases.flatMap(generateAliasCombos).flatMap(spaceDup) ++
+        fullNameAliases).distinct
+    }
   }
+
+  def fromTerritoryCode(territoryCode: Int): Option[Territory] = codeList.get(territoryCode)
+
+  def fromString(name: String, parentTerritory: Option[Territory] = None): Option[Territory] = {
+    parentTerritory.foreach(pt => require(parentTerritories.contains(pt)))
+    val trimmed = name.trim
+    (nameMap.get(trimmed), parentTerritory) match {
+      case (Some(terrs), None) => terrs.headOption
+      case (Some(terrs), parent@Some(_)) =>
+        terrs.find(_.parentTerritory == parent)
+      case _ =>
+        // Check for a case such as USA-NLD (=NLD)
+        val dividerLocation = Math.max(trimmed.indexOf('-'), trimmed.indexOf(' '))
+        if (dividerLocation >= 0) fromString(trimmed.substring(dividerLocation + 1), parentTerritory)
+        else None
+    }
+  }
+
+  // private implementation
+
+  private[scala] lazy val codeList: Map[Int, Territory] = territories.map(t => t.id -> t).toMap
+
+  private[scala] lazy val nameMap: Map[String, Seq[Territory]] = {
+    def populateTerritory(map: Map[String, Seq[Territory]], territory: Territory): Map[String, Seq[Territory]] = {
+      territory.allNames.foldLeft(map)(addName(territory))
+    }
+    territories.foldLeft(Map[String, Seq[Territory]]())(populateTerritory)
+  }
+
+  private[scala] lazy val parentTerritories: Set[Territory] = territories.flatMap(_.parentTerritory).toSet
+
+  private[scala] def addName(territory: Territory)
+                            (nameMap: Map[String, Seq[Territory]], name: String): Map[String, Seq[Territory]] = {
+    // Add child territories in the order the parents are declared.
+    // This results in consistent decoding of ambiguous territory names.
+    nameMap.get(name) match {
+      case Some(terrs) =>
+        territory.parentTerritory.map { parent =>
+          (nameMap - name) + (name -> (terrs :+ territory).distinct)
+        }.getOrElse(sys.error("You can't have multiple top-level territories with the same name"))
+      case None => nameMap + (name -> Seq(territory))
+    }
+  }
+
+  lazy val territories: Seq[Territory] = values.toSeq.map(_.asInstanceOf[Territory])
+}
+
+/**
+ * This class defines the available territory codes as used by mapcode.
+ */
+object Territory extends TerritoryOperations {
 
   val USA = Territory(409, "USA", None, Array("US"), Array("United States of America", "America"))
   val IND = Territory(406, "India", None, Array("IN"))
@@ -74,7 +139,7 @@ object Territory extends Enumeration {
   val RUS = Territory(495, "Russia", None, Array("RU"))
   val CHN = Territory(527, "China", None, Array("CN"))
   val ATA = Territory(539, "Antarctica")
-  val VAT = Territory(0, "Vatican City", None, Array.empty, Array("Holy See)"))
+  val VAT = Territory(0, "Vatican City", None, Array.empty, Array("Holy See"))
   val MCO = Territory(1, "Monaco")
   val GIB = Territory(2, "Gibraltar")
   val TKL = Territory(3, "Tokelau")
@@ -307,391 +372,304 @@ object Territory extends Enumeration {
   val LBY = Territory(230, "Libya")
   val SDN = Territory(231, "Sudan")
   val IDN = Territory(232, "Indonesia")
-  val MX_DIF = Territory(233, "Federal District", Some(ParentTerritory.MEX), Array("MX-DF"))
-  val MX_TLA = Territory(234, "Tlaxcala", Some(ParentTerritory.MEX), Array("MX-TL"))
-  val MX_MOR = Territory(235, "Morelos", Some(ParentTerritory.MEX), Array("MX-MO"))
-  val MX_AGU = Territory(236, "Aguascalientes", Some(ParentTerritory.MEX), Array("MX-AG"))
-  val MX_CL = Territory(237, "Colima", Some(ParentTerritory.MEX), Array("MX-COL"))
-  val MX_QUE = Territory(238, "Queretaro", Some(ParentTerritory.MEX), Array("MX-QE"))
-  val MX_HID = Territory(239, "Hidalgo", Some(ParentTerritory.MEX), Array("MX-HG"))
-  val MX_MX = Territory(240, "Mexico State", Some(ParentTerritory.MEX), Array("MX-ME", "MX-MEX"))
-  val MX_TAB = Territory(241, "Tabasco", Some(ParentTerritory.MEX), Array("MX-TB"))
-  val MX_NAY = Territory(242, "Nayarit", Some(ParentTerritory.MEX), Array("MX-NA"))
-  val MX_GUA = Territory(243, "Guanajuato", Some(ParentTerritory.MEX), Array("MX-GT"))
-  val MX_PUE = Territory(244, "Puebla", Some(ParentTerritory.MEX), Array("MX-PB"))
-  val MX_YUC = Territory(245, "Yucatan", Some(ParentTerritory.MEX), Array("MX-YU"))
-  val MX_ROO = Territory(246, "Quintana Roo", Some(ParentTerritory.MEX), Array("MX-QR"))
-  val MX_SIN = Territory(247, "Sinaloa", Some(ParentTerritory.MEX), Array("MX-SI"))
-  val MX_CAM = Territory(248, "Campeche", Some(ParentTerritory.MEX), Array("MX-CM"))
-  val MX_MIC = Territory(249, "Michoacan", Some(ParentTerritory.MEX), Array("MX-MI"))
-  val MX_SLP = Territory(250, "San Luis Potosi", Some(ParentTerritory.MEX), Array("MX-SL"))
-  val MX_GRO = Territory(251, "Guerrero", Some(ParentTerritory.MEX), Array("MX-GR"))
-  val MX_NLE = Territory(252, "Nuevo Leon", Some(ParentTerritory.MEX), Array("MX-NL"))
-  val MX_BCN = Territory(253, "Baja California", Some(ParentTerritory.MEX), Array("MX-BC"))
-  val MX_VER = Territory(254, "Veracruz", Some(ParentTerritory.MEX), Array("MX-VE"))
-  val MX_CHP = Territory(255, "Chiapas", Some(ParentTerritory.MEX), Array("MX-CS"))
-  val MX_BCS = Territory(256, "Baja California Sur", Some(ParentTerritory.MEX), Array("MX-BS"))
-  val MX_ZAC = Territory(257, "Zacatecas", Some(ParentTerritory.MEX), Array("MX-ZA"))
-  val MX_JAL = Territory(258, "Jalisco", Some(ParentTerritory.MEX), Array("MX-JA"))
-  val MX_TAM = Territory(259, "Tamaulipas", Some(ParentTerritory.MEX), Array("MX-TM"))
-  val MX_OAX = Territory(260, "Oaxaca", Some(ParentTerritory.MEX), Array("MX-OA"))
-  val MX_DUR = Territory(261, "Durango", Some(ParentTerritory.MEX), Array("MX-DG"))
-  val MX_COA = Territory(262, "Coahuila", Some(ParentTerritory.MEX), Array("MX-CO"))
-  val MX_SON = Territory(263, "Sonora", Some(ParentTerritory.MEX), Array("MX-SO"))
-  val MX_CHH = Territory(264, "Chihuahua", Some(ParentTerritory.MEX), Array("MX-CH"))
+  val MX_DIF = Territory(233, "Federal District", Some(MEX), Array("MX-DF"))
+  val MX_TLA = Territory(234, "Tlaxcala", Some(MEX), Array("MX-TL"))
+  val MX_MOR = Territory(235, "Morelos", Some(MEX), Array("MX-MO"))
+  val MX_AGU = Territory(236, "Aguascalientes", Some(MEX), Array("MX-AG"))
+  val MX_CL = Territory(237, "Colima", Some(MEX), Array("MX-COL"))
+  val MX_QUE = Territory(238, "Queretaro", Some(MEX), Array("MX-QE"))
+  val MX_HID = Territory(239, "Hidalgo", Some(MEX), Array("MX-HG"))
+  val MX_MX = Territory(240, "Mexico State", Some(MEX), Array("MX-ME", "MX-MEX"))
+  val MX_TAB = Territory(241, "Tabasco", Some(MEX), Array("MX-TB"))
+  val MX_NAY = Territory(242, "Nayarit", Some(MEX), Array("MX-NA"))
+  val MX_GUA = Territory(243, "Guanajuato", Some(MEX), Array("MX-GT"))
+  val MX_PUE = Territory(244, "Puebla", Some(MEX), Array("MX-PB"))
+  val MX_YUC = Territory(245, "Yucatan", Some(MEX), Array("MX-YU"))
+  val MX_ROO = Territory(246, "Quintana Roo", Some(MEX), Array("MX-QR"))
+  val MX_SIN = Territory(247, "Sinaloa", Some(MEX), Array("MX-SI"))
+  val MX_CAM = Territory(248, "Campeche", Some(MEX), Array("MX-CM"))
+  val MX_MIC = Territory(249, "Michoacan", Some(MEX), Array("MX-MI"))
+  val MX_SLP = Territory(250, "San Luis Potosi", Some(MEX), Array("MX-SL"))
+  val MX_GRO = Territory(251, "Guerrero", Some(MEX), Array("MX-GR"))
+  val MX_NLE = Territory(252, "Nuevo Leon", Some(MEX), Array("MX-NL"))
+  val MX_BCN = Territory(253, "Baja California", Some(MEX), Array("MX-BC"))
+  val MX_VER = Territory(254, "Veracruz", Some(MEX), Array("MX-VE"))
+  val MX_CHP = Territory(255, "Chiapas", Some(MEX), Array("MX-CS"))
+  val MX_BCS = Territory(256, "Baja California Sur", Some(MEX), Array("MX-BS"))
+  val MX_ZAC = Territory(257, "Zacatecas", Some(MEX), Array("MX-ZA"))
+  val MX_JAL = Territory(258, "Jalisco", Some(MEX), Array("MX-JA"))
+  val MX_TAM = Territory(259, "Tamaulipas", Some(MEX), Array("MX-TM"))
+  val MX_OAX = Territory(260, "Oaxaca", Some(MEX), Array("MX-OA"))
+  val MX_DUR = Territory(261, "Durango", Some(MEX), Array("MX-DG"))
+  val MX_COA = Territory(262, "Coahuila", Some(MEX), Array("MX-CO"))
+  val MX_SON = Territory(263, "Sonora", Some(MEX), Array("MX-SO"))
+  val MX_CHH = Territory(264, "Chihuahua", Some(MEX), Array("MX-CH"))
   val GRL = Territory(265, "Greenland")
   val SAU = Territory(266, "Saudi Arabia")
   val COD = Territory(267, "Congo-Kinshasa")
   val DZA = Territory(268, "Algeria")
   val KAZ = Territory(269, "Kazakhstan")
   val ARG = Territory(270, "Argentina")
-  val IN_DD = Territory(271, "Daman and Diu", Some(ParentTerritory.IND))
-  val IN_DN = Territory(272, "Dadra and Nagar Haveli", Some(ParentTerritory.IND))
-  val IN_CH = Territory(273, "Chandigarh", Some(ParentTerritory.IND))
-  val IN_AN = Territory(274, "Andaman and Nicobar", Some(ParentTerritory.IND))
-  val IN_LD = Territory(275, "Lakshadweep", Some(ParentTerritory.IND))
-  val IN_DL = Territory(276, "Delhi", Some(ParentTerritory.IND))
-  val IN_ML = Territory(277, "Meghalaya", Some(ParentTerritory.IND))
-  val IN_NL = Territory(278, "Nagaland", Some(ParentTerritory.IND))
-  val IN_MN = Territory(279, "Manipur", Some(ParentTerritory.IND))
-  val IN_TR = Territory(280, "Tripura", Some(ParentTerritory.IND))
-  val IN_MZ = Territory(281, "Mizoram", Some(ParentTerritory.IND))
-  val IN_SK = Territory(282, "Sikkim", Some(ParentTerritory.IND), Array("IN-SKM"))
-  val IN_PB = Territory(283, "Punjab", Some(ParentTerritory.IND))
-  val IN_HR = Territory(284, "Haryana", Some(ParentTerritory.IND))
-  val IN_AR = Territory(285, "Arunachal Pradesh", Some(ParentTerritory.IND))
-  val IN_AS = Territory(286, "Assam", Some(ParentTerritory.IND))
-  val IN_BR = Territory(287, "Bihar", Some(ParentTerritory.IND))
-  val IN_UT = Territory(288, "Uttarakhand", Some(ParentTerritory.IND), Array("IN-UK"))
-  val IN_GA = Territory(289, "Goa", Some(ParentTerritory.IND))
-  val IN_KL = Territory(290, "Kerala", Some(ParentTerritory.IND))
-  val IN_TN = Territory(291, "Tamil Nuda", Some(ParentTerritory.IND))
-  val IN_HP = Territory(292, "Himachal Pradesh", Some(ParentTerritory.IND))
-  val IN_JK = Territory(293, "Jammu and Kashmir", Some(ParentTerritory.IND))
-  val IN_CT = Territory(294, "Chhattisgarh", Some(ParentTerritory.IND), Array("IN-CG"))
-  val IN_JH = Territory(295, "Jharkhand", Some(ParentTerritory.IND))
-  val IN_KA = Territory(296, "Karnataka", Some(ParentTerritory.IND))
-  val IN_RJ = Territory(297, "Rajasthan", Some(ParentTerritory.IND))
-  val IN_OR = Territory(298, "Odisha", Some(ParentTerritory.IND), Array("IN-OD"), Array("Orissa"))
-  val IN_GJ = Territory(299, "Gujarat", Some(ParentTerritory.IND))
-  val IN_WB = Territory(300, "West Bengal", Some(ParentTerritory.IND))
-  val IN_MP = Territory(301, "Madhya Pradesh", Some(ParentTerritory.IND))
-  val IN_AP = Territory(302, "Andhra Pradesh", Some(ParentTerritory.IND))
-  val IN_MH = Territory(303, "Maharashtra", Some(ParentTerritory.IND))
-  val IN_UP = Territory(304, "Uttar Pradesh", Some(ParentTerritory.IND))
-  val IN_PY = Territory(305, "Puducherry", Some(ParentTerritory.IND))
-  val AU_NSW = Territory(306, "New South Wales", Some(ParentTerritory.AUS))
-  val AU_ACT = Territory(307, "Australian Capital Territory", Some(ParentTerritory.AUS))
-  val AU_JBT = Territory(308, "Jervis Bay Territory", Some(ParentTerritory.AUS), Array("AU-JB"))
-  val AU_NT = Territory(309, "Northern Territory", Some(ParentTerritory.AUS))
-  val AU_SA = Territory(310, "South Australia", Some(ParentTerritory.AUS))
-  val AU_TAS = Territory(311, "Tasmania", Some(ParentTerritory.AUS), Array("AU-TS"))
-  val AU_VIC = Territory(312, "Victoria", Some(ParentTerritory.AUS))
-  val AU_WA = Territory(313, "Western Australia", Some(ParentTerritory.AUS))
-  val AU_QLD = Territory(314, "Queensland", Some(ParentTerritory.AUS), Array("AU-QL"))
-  val BR_DF = Territory(315, "Distrito Federal", Some(ParentTerritory.BRA))
-  val BR_SE = Territory(316, "Sergipe", Some(ParentTerritory.BRA))
-  val BR_AL = Territory(317, "Alagoas", Some(ParentTerritory.BRA))
-  val BR_RJ = Territory(318, "Rio de Janeiro", Some(ParentTerritory.BRA))
-  val BR_ES = Territory(319, "Espirito Santo", Some(ParentTerritory.BRA))
-  val BR_RN = Territory(320, "Rio Grande do Norte", Some(ParentTerritory.BRA))
-  val BR_PB = Territory(321, "Paraiba", Some(ParentTerritory.BRA))
-  val BR_SC = Territory(322, "Santa Catarina", Some(ParentTerritory.BRA))
-  val BR_PE = Territory(323, "Pernambuco", Some(ParentTerritory.BRA))
-  val BR_AP = Territory(324, "Amapa", Some(ParentTerritory.BRA))
-  val BR_CE = Territory(325, "Ceara", Some(ParentTerritory.BRA))
-  val BR_AC = Territory(326, "Acre", Some(ParentTerritory.BRA))
-  val BR_PR = Territory(327, "Parana", Some(ParentTerritory.BRA))
-  val BR_RR = Territory(328, "Roraima", Some(ParentTerritory.BRA))
-  val BR_RO = Territory(329, "Rondonia", Some(ParentTerritory.BRA))
-  val BR_SP = Territory(330, "Sao Paulo", Some(ParentTerritory.BRA))
-  val BR_PI = Territory(331, "Piaui", Some(ParentTerritory.BRA))
-  val BR_TO = Territory(332, "Tocantins", Some(ParentTerritory.BRA))
-  val BR_RS = Territory(333, "Rio Grande do Sul", Some(ParentTerritory.BRA))
-  val BR_MA = Territory(334, "Maranhao", Some(ParentTerritory.BRA))
-  val BR_GO = Territory(335, "Goias", Some(ParentTerritory.BRA))
-  val BR_MS = Territory(336, "Mato Grosso do Sul", Some(ParentTerritory.BRA))
-  val BR_BA = Territory(337, "Bahia", Some(ParentTerritory.BRA))
-  val BR_MG = Territory(338, "Minas Gerais", Some(ParentTerritory.BRA))
-  val BR_MT = Territory(339, "Mato Grosso", Some(ParentTerritory.BRA))
-  val BR_PA = Territory(340, "Para", Some(ParentTerritory.BRA))
-  val BR_AM = Territory(341, "Amazonas", Some(ParentTerritory.BRA))
-  val US_DC = Territory(342, "District of Columbia", Some(ParentTerritory.USA))
-  val US_RI = Territory(343, "Rhode Island", Some(ParentTerritory.USA))
-  val US_DE = Territory(344, "Delaware", Some(ParentTerritory.USA))
-  val US_CT = Territory(345, "Connecticut", Some(ParentTerritory.USA))
-  val US_NJ = Territory(346, "New Jersey", Some(ParentTerritory.USA))
-  val US_NH = Territory(347, "New Hampshire", Some(ParentTerritory.USA))
-  val US_VT = Territory(348, "Vermont", Some(ParentTerritory.USA))
-  val US_MA = Territory(349, "Massachusetts", Some(ParentTerritory.USA))
-  val US_HI = Territory(350, "Hawaii", Some(ParentTerritory.USA), Array("US-MID"))
-  val US_MD = Territory(351, "Maryland", Some(ParentTerritory.USA))
-  val US_WV = Territory(352, "West Virginia", Some(ParentTerritory.USA))
-  val US_SC = Territory(353, "South Carolina", Some(ParentTerritory.USA))
-  val US_ME = Territory(354, "Maine", Some(ParentTerritory.USA))
-  val US_IN = Territory(355, "Indiana", Some(ParentTerritory.USA))
-  val US_KY = Territory(356, "Kentucky", Some(ParentTerritory.USA))
-  val US_TN = Territory(357, "Tennessee", Some(ParentTerritory.USA))
-  val US_VA = Territory(358, "Virginia", Some(ParentTerritory.USA))
-  val US_OH = Territory(359, "Ohio", Some(ParentTerritory.USA))
-  val US_PA = Territory(360, "Pennsylvania", Some(ParentTerritory.USA))
-  val US_MS = Territory(361, "Mississippi", Some(ParentTerritory.USA))
-  val US_LA = Territory(362, "Louisiana", Some(ParentTerritory.USA))
-  val US_AL = Territory(363, "Alabama", Some(ParentTerritory.USA))
-  val US_AR = Territory(364, "Arkansas", Some(ParentTerritory.USA))
-  val US_NC = Territory(365, "North Carolina", Some(ParentTerritory.USA))
-  val US_NY = Territory(366, "New York", Some(ParentTerritory.USA))
-  val US_IA = Territory(367, "Iowa", Some(ParentTerritory.USA))
-  val US_IL = Territory(368, "Illinois", Some(ParentTerritory.USA))
-  val US_GA = Territory(369, "Georgia", Some(ParentTerritory.USA))
-  val US_WI = Territory(370, "Wisconsin", Some(ParentTerritory.USA))
-  val US_FL = Territory(371, "Florida", Some(ParentTerritory.USA))
-  val US_MO = Territory(372, "Missouri", Some(ParentTerritory.USA))
-  val US_OK = Territory(373, "Oklahoma", Some(ParentTerritory.USA))
-  val US_ND = Territory(374, "North Dakota", Some(ParentTerritory.USA))
-  val US_WA = Territory(375, "Washington", Some(ParentTerritory.USA))
-  val US_SD = Territory(376, "South Dakota", Some(ParentTerritory.USA))
-  val US_NE = Territory(377, "Nebraska", Some(ParentTerritory.USA))
-  val US_KS = Territory(378, "Kansas", Some(ParentTerritory.USA))
-  val US_ID = Territory(379, "Idaho", Some(ParentTerritory.USA))
-  val US_UT = Territory(380, "Utah", Some(ParentTerritory.USA))
-  val US_MN = Territory(381, "Minnesota", Some(ParentTerritory.USA))
-  val US_MI = Territory(382, "Michigan", Some(ParentTerritory.USA))
-  val US_WY = Territory(383, "Wyoming", Some(ParentTerritory.USA))
-  val US_OR = Territory(384, "Oregon", Some(ParentTerritory.USA))
-  val US_CO = Territory(385, "Colorado", Some(ParentTerritory.USA))
-  val US_NV = Territory(386, "Nevada", Some(ParentTerritory.USA))
-  val US_AZ = Territory(387, "Arizona", Some(ParentTerritory.USA))
-  val US_NM = Territory(388, "New Mexico", Some(ParentTerritory.USA))
-  val US_MT = Territory(389, "Montana", Some(ParentTerritory.USA))
-  val US_CA = Territory(390, "California", Some(ParentTerritory.USA))
-  val US_TX = Territory(391, "Texas", Some(ParentTerritory.USA))
-  val US_AK = Territory(392, "Alaska", Some(ParentTerritory.USA))
-  val CA_BC = Territory(393, "British Columbia", Some(ParentTerritory.CAN))
-  val CA_AB = Territory(394, "Alberta", Some(ParentTerritory.CAN))
-  val CA_ON = Territory(395, "Ontario", Some(ParentTerritory.CAN))
-  val CA_QC = Territory(396, "Quebec", Some(ParentTerritory.CAN))
-  val CA_SK = Territory(397, "Saskatchewan", Some(ParentTerritory.CAN))
-  val CA_MB = Territory(398, "Manitoba", Some(ParentTerritory.CAN))
-  val CA_NL = Territory(399, "Newfoundland", Some(ParentTerritory.CAN))
-  val CA_NB = Territory(400, "New Brunswick", Some(ParentTerritory.CAN))
-  val CA_NS = Territory(401, "Nova Scotia", Some(ParentTerritory.CAN))
-  val CA_PE = Territory(402, "Prince Edward Island", Some(ParentTerritory.CAN))
-  val CA_YT = Territory(403, "Yukon", Some(ParentTerritory.CAN))
-  val CA_NT = Territory(404, "Northwest Territories", Some(ParentTerritory.CAN))
-  val CA_NU = Territory(405, "Nunavut", Some(ParentTerritory.CAN))
-  val RU_MOW = Territory(411, "Moscow", Some(ParentTerritory.RUS))
-  val RU_SPE = Territory(412, "Saint Petersburg", Some(ParentTerritory.RUS))
-  val RU_KGD = Territory(413, "Kaliningrad Oblast", Some(ParentTerritory.RUS))
-  val RU_IN = Territory(414, "Ingushetia Republic", Some(ParentTerritory.RUS))
-  val RU_AD = Territory(415, "Adygea Republic", Some(ParentTerritory.RUS))
-  val RU_SE = Territory(416, "North Ossetia-Alania Republic", Some(ParentTerritory.RUS))
-  val RU_KB = Territory(417, "Kabardino-Balkar Republic", Some(ParentTerritory.RUS))
-  val RU_KC = Territory(418, "Karachay-Cherkess Republic", Some(ParentTerritory.RUS))
-  val RU_CE = Territory(419, "Chechen Republic", Some(ParentTerritory.RUS))
-  val RU_CU = Territory(420, "Chuvash Republic", Some(ParentTerritory.RUS))
-  val RU_IVA = Territory(421, "Ivanovo Oblast", Some(ParentTerritory.RUS))
-  val RU_LIP = Territory(422, "Lipetsk Oblast", Some(ParentTerritory.RUS))
-  val RU_ORL = Territory(423, "Oryol Oblast", Some(ParentTerritory.RUS))
-  val RU_TUL = Territory(424, "Tula Oblast", Some(ParentTerritory.RUS))
-  val RU_BE = Territory(425, "Belgorod Oblast", Some(ParentTerritory.RUS), Array("RU-BEL"))
-  val RU_VLA = Territory(426, "Vladimir Oblast", Some(ParentTerritory.RUS))
-  val RU_KRS = Territory(427, "Kursk Oblast", Some(ParentTerritory.RUS))
-  val RU_KLU = Territory(428, "Kaluga Oblast", Some(ParentTerritory.RUS))
-  val RU_TT = Territory(429, "Tambov Oblast", Some(ParentTerritory.RUS), Array("RU-TAM"))
-  val RU_BRY = Territory(430, "Bryansk Oblast", Some(ParentTerritory.RUS))
-  val RU_YAR = Territory(431, "Yaroslavl Oblast", Some(ParentTerritory.RUS))
-  val RU_RYA = Territory(432, "Ryazan Oblast", Some(ParentTerritory.RUS))
-  val RU_AST = Territory(433, "Astrakhan Oblast", Some(ParentTerritory.RUS))
-  val RU_MOS = Territory(434, "Moscow Oblast", Some(ParentTerritory.RUS))
-  val RU_SMO = Territory(435, "Smolensk Oblast", Some(ParentTerritory.RUS))
-  val RU_DA = Territory(436, "Dagestan Republic", Some(ParentTerritory.RUS))
-  val RU_VOR = Territory(437, "Voronezh Oblast", Some(ParentTerritory.RUS))
-  val RU_NGR = Territory(438, "Novgorod Oblast", Some(ParentTerritory.RUS))
-  val RU_PSK = Territory(439, "Pskov Oblast", Some(ParentTerritory.RUS))
-  val RU_KOS = Territory(440, "Kostroma Oblast", Some(ParentTerritory.RUS))
-  val RU_STA = Territory(441, "Stavropol Krai", Some(ParentTerritory.RUS))
-  val RU_KDA = Territory(442, "Krasnodar Krai", Some(ParentTerritory.RUS))
-  val RU_KL = Territory(443, "Kalmykia Republic", Some(ParentTerritory.RUS))
-  val RU_TVE = Territory(444, "Tver Oblast", Some(ParentTerritory.RUS))
-  val RU_LEN = Territory(445, "Leningrad Oblast", Some(ParentTerritory.RUS))
-  val RU_ROS = Territory(446, "Rostov Oblast", Some(ParentTerritory.RUS))
-  val RU_VGG = Territory(447, "Volgograd Oblast", Some(ParentTerritory.RUS))
-  val RU_VLG = Territory(448, "Vologda Oblast", Some(ParentTerritory.RUS))
-  val RU_MUR = Territory(449, "Murmansk Oblast", Some(ParentTerritory.RUS))
-  val RU_KR = Territory(450, "Karelia Republic", Some(ParentTerritory.RUS))
-  val RU_NEN = Territory(451, "Nenets Autonomous Okrug", Some(ParentTerritory.RUS))
-  val RU_KO = Territory(452, "Komi Republic", Some(ParentTerritory.RUS))
-  val RU_ARK = Territory(453, "Arkhangelsk Oblast", Some(ParentTerritory.RUS))
-  val RU_MO = Territory(454, "Mordovia Republic", Some(ParentTerritory.RUS))
-  val RU_NIZ = Territory(455, "Nizhny Novgorod Oblast", Some(ParentTerritory.RUS))
-  val RU_PNZ = Territory(456, "Penza Oblast", Some(ParentTerritory.RUS))
-  val RU_KI = Territory(457, "Kirov Oblast", Some(ParentTerritory.RUS), Array("RU-KIR"))
-  val RU_ME = Territory(458, "Mari El Republic", Some(ParentTerritory.RUS))
-  val RU_ORE = Territory(459, "Orenburg Oblast", Some(ParentTerritory.RUS))
-  val RU_ULY = Territory(460, "Ulyanovsk Oblast", Some(ParentTerritory.RUS))
-  val RU_PM = Territory(461, "Perm Krai", Some(ParentTerritory.RUS), Array("RU-PER"))
-  val RU_BA = Territory(462, "Bashkortostan Republic", Some(ParentTerritory.RUS))
-  val RU_UD = Territory(463, "Udmurt Republic", Some(ParentTerritory.RUS))
-  val RU_TA = Territory(464, "Tatarstan Republic", Some(ParentTerritory.RUS))
-  val RU_SAM = Territory(465, "Samara Oblast", Some(ParentTerritory.RUS))
-  val RU_SAR = Territory(466, "Saratov Oblast", Some(ParentTerritory.RUS))
-  val RU_YAN = Territory(467, "Yamalo-Nenets", Some(ParentTerritory.RUS))
-  val RU_KM = Territory(468, "Khanty-Mansi", Some(ParentTerritory.RUS), Array("RU-KHM"))
-  val RU_SVE = Territory(469, "Sverdlovsk Oblast", Some(ParentTerritory.RUS))
-  val RU_TYU = Territory(470, "Tyumen Oblast", Some(ParentTerritory.RUS))
-  val RU_KGN = Territory(471, "Kurgan Oblast", Some(ParentTerritory.RUS))
-  val RU_CH = Territory(472, "Chelyabinsk Oblast", Some(ParentTerritory.RUS), Array("RU-CHE"))
-  val RU_BU = Territory(473, "Buryatia Republic", Some(ParentTerritory.RUS))
-  val RU_ZAB = Territory(474, "Zabaykalsky Krai", Some(ParentTerritory.RUS))
-  val RU_IRK = Territory(475, "Irkutsk Oblast", Some(ParentTerritory.RUS))
-  val RU_NVS = Territory(476, "Novosibirsk Oblast", Some(ParentTerritory.RUS))
-  val RU_TOM = Territory(477, "Tomsk Oblast", Some(ParentTerritory.RUS))
-  val RU_OMS = Territory(478, "Omsk Oblast", Some(ParentTerritory.RUS))
-  val RU_KK = Territory(479, "Khakassia Republic", Some(ParentTerritory.RUS))
-  val RU_KEM = Territory(480, "Kemerovo Oblast", Some(ParentTerritory.RUS))
-  val RU_AL = Territory(481, "Altai Republic", Some(ParentTerritory.RUS))
-  val RU_ALT = Territory(482, "Altai Krai", Some(ParentTerritory.RUS))
-  val RU_TY = Territory(483, "Tuva Republic", Some(ParentTerritory.RUS))
-  val RU_KYA = Territory(484, "Krasnoyarsk Krai", Some(ParentTerritory.RUS))
-  val RU_MAG = Territory(485, "Magadan Oblast", Some(ParentTerritory.RUS))
-  val RU_CHU = Territory(486, "Chukotka Okrug", Some(ParentTerritory.RUS))
-  val RU_KAM = Territory(487, "Kamchatka Krai", Some(ParentTerritory.RUS))
-  val RU_SAK = Territory(488, "Sakhalin Oblast", Some(ParentTerritory.RUS))
-  val RU_PO = Territory(489, "Primorsky Krai", Some(ParentTerritory.RUS), Array("RU-PRI"))
-  val RU_YEV = Territory(490, "Jewish Autonomous Oblast", Some(ParentTerritory.RUS))
-  val RU_KHA = Territory(491, "Khabarovsk Krai", Some(ParentTerritory.RUS))
-  val RU_AMU = Territory(492, "Amur Oblast", Some(ParentTerritory.RUS))
-  val RU_SA = Territory(493, "Sakha Republic", Some(ParentTerritory.RUS), Array.empty, Array("Yakutia Republic"))
-  val CN_SH = Territory(496, "Shanghai", Some(ParentTerritory.CHN), Array("CN-31"))
-  val CN_TJ = Territory(497, "Tianjin", Some(ParentTerritory.CHN), Array("CN-12"))
-  val CN_BJ = Territory(498, "Beijing", Some(ParentTerritory.CHN), Array("CN-11"))
-  val CN_HI = Territory(499, "Hainan", Some(ParentTerritory.CHN), Array("CN-46"))
-  val CN_NX = Territory(500, "Ningxia Hui", Some(ParentTerritory.CHN), Array("CN-64"))
-  val CN_CQ = Territory(501, "Chongqing", Some(ParentTerritory.CHN), Array("CN-50"))
-  val CN_ZJ = Territory(502, "Zhejiang", Some(ParentTerritory.CHN), Array("CN-33"))
-  val CN_JS = Territory(503, "Jiangsu", Some(ParentTerritory.CHN), Array("CN-32"))
-  val CN_FJ = Territory(504, "Fujian", Some(ParentTerritory.CHN), Array("CN-35"))
-  val CN_AH = Territory(505, "Anhui", Some(ParentTerritory.CHN), Array("CN-34"))
-  val CN_LN = Territory(506, "Liaoning", Some(ParentTerritory.CHN), Array("CN-21"))
-  val CN_SD = Territory(507, "Shandong", Some(ParentTerritory.CHN), Array("CN-37"))
-  val CN_SX = Territory(508, "Shanxi", Some(ParentTerritory.CHN), Array("CN-14"))
-  val CN_JX = Territory(509, "Jiangxi", Some(ParentTerritory.CHN), Array("CN-36"))
-  val CN_HA = Territory(510, "Henan", Some(ParentTerritory.CHN), Array("CN-41"))
-  val CN_GZ = Territory(511, "Guizhou", Some(ParentTerritory.CHN), Array("CN-52"))
-  val CN_GD = Territory(512, "Guangdong", Some(ParentTerritory.CHN), Array("CN-44"))
-  val CN_HB = Territory(513, "Hubei", Some(ParentTerritory.CHN), Array("CN-42"))
-  val CN_JL = Territory(514, "Jilin", Some(ParentTerritory.CHN), Array("CN-22"))
-  val CN_HE = Territory(515, "Hebei", Some(ParentTerritory.CHN), Array("CN-13"))
-  val CN_SN = Territory(516, "Shaanxi", Some(ParentTerritory.CHN), Array("CN-61"))
-  val CN_NM = Territory(517, "Nei Mongol", Some(ParentTerritory.CHN), Array("CN-15"), Array("Inner Mongolia"))
-  val CN_HL = Territory(518, "Heilongjiang", Some(ParentTerritory.CHN), Array("CN-23"))
-  val CN_HN = Territory(519, "Hunan", Some(ParentTerritory.CHN), Array("CN-43"))
-  val CN_GX = Territory(520, "Guangxi Zhuang", Some(ParentTerritory.CHN), Array("CN-45"))
-  val CN_SC = Territory(521, "Sichuan", Some(ParentTerritory.CHN), Array("CN-51"))
-  val CN_YN = Territory(522, "Yunnan", Some(ParentTerritory.CHN), Array("CN-53"))
-  val CN_XZ = Territory(523, "Xizang", Some(ParentTerritory.CHN), Array("CN-54"), Array("Tibet"))
-  val CN_GS = Territory(524, "Gansu", Some(ParentTerritory.CHN), Array("CN-62"))
-  val CN_QH = Territory(525, "Qinghai", Some(ParentTerritory.CHN), Array("CN-63"))
-  val CN_XJ = Territory(526, "Xinjiang Uyghur", Some(ParentTerritory.CHN), Array("CN-65"))
+  val IN_DD = Territory(271, "Daman and Diu", Some(IND))
+  val IN_DN = Territory(272, "Dadra and Nagar Haveli", Some(IND))
+  val IN_CH = Territory(273, "Chandigarh", Some(IND))
+  val IN_AN = Territory(274, "Andaman and Nicobar", Some(IND))
+  val IN_LD = Territory(275, "Lakshadweep", Some(IND))
+  val IN_DL = Territory(276, "Delhi", Some(IND))
+  val IN_ML = Territory(277, "Meghalaya", Some(IND))
+  val IN_NL = Territory(278, "Nagaland", Some(IND))
+  val IN_MN = Territory(279, "Manipur", Some(IND))
+  val IN_TR = Territory(280, "Tripura", Some(IND))
+  val IN_MZ = Territory(281, "Mizoram", Some(IND))
+  val IN_SK = Territory(282, "Sikkim", Some(IND), Array("IN-SKM"))
+  val IN_PB = Territory(283, "Punjab", Some(IND))
+  val IN_HR = Territory(284, "Haryana", Some(IND))
+  val IN_AR = Territory(285, "Arunachal Pradesh", Some(IND))
+  val IN_AS = Territory(286, "Assam", Some(IND))
+  val IN_BR = Territory(287, "Bihar", Some(IND))
+  val IN_UT = Territory(288, "Uttarakhand", Some(IND), Array("IN-UK"))
+  val IN_GA = Territory(289, "Goa", Some(IND))
+  val IN_KL = Territory(290, "Kerala", Some(IND))
+  val IN_TN = Territory(291, "Tamil Nuda", Some(IND))
+  val IN_HP = Territory(292, "Himachal Pradesh", Some(IND))
+  val IN_JK = Territory(293, "Jammu and Kashmir", Some(IND))
+  val IN_CT = Territory(294, "Chhattisgarh", Some(IND), Array("IN-CG"))
+  val IN_JH = Territory(295, "Jharkhand", Some(IND))
+  val IN_KA = Territory(296, "Karnataka", Some(IND))
+  val IN_RJ = Territory(297, "Rajasthan", Some(IND))
+  val IN_OR = Territory(298, "Odisha", Some(IND), Array("IN-OD"), Array("Orissa"))
+  val IN_GJ = Territory(299, "Gujarat", Some(IND))
+  val IN_WB = Territory(300, "West Bengal", Some(IND))
+  val IN_MP = Territory(301, "Madhya Pradesh", Some(IND))
+  val IN_AP = Territory(302, "Andhra Pradesh", Some(IND))
+  val IN_MH = Territory(303, "Maharashtra", Some(IND))
+  val IN_UP = Territory(304, "Uttar Pradesh", Some(IND))
+  val IN_PY = Territory(305, "Puducherry", Some(IND))
+  val AU_NSW = Territory(306, "New South Wales", Some(AUS))
+  val AU_ACT = Territory(307, "Australian Capital Territory", Some(AUS))
+  val AU_JBT = Territory(308, "Jervis Bay Territory", Some(AUS), Array("AU-JB"))
+  val AU_NT = Territory(309, "Northern Territory", Some(AUS))
+  val AU_SA = Territory(310, "South Australia", Some(AUS))
+  val AU_TAS = Territory(311, "Tasmania", Some(AUS), Array("AU-TS"))
+  val AU_VIC = Territory(312, "Victoria", Some(AUS))
+  val AU_WA = Territory(313, "Western Australia", Some(AUS))
+  val AU_QLD = Territory(314, "Queensland", Some(AUS), Array("AU-QL"))
+  val BR_DF = Territory(315, "Distrito Federal", Some(BRA))
+  val BR_SE = Territory(316, "Sergipe", Some(BRA))
+  val BR_AL = Territory(317, "Alagoas", Some(BRA))
+  val BR_RJ = Territory(318, "Rio de Janeiro", Some(BRA))
+  val BR_ES = Territory(319, "Espirito Santo", Some(BRA))
+  val BR_RN = Territory(320, "Rio Grande do Norte", Some(BRA))
+  val BR_PB = Territory(321, "Paraiba", Some(BRA))
+  val BR_SC = Territory(322, "Santa Catarina", Some(BRA))
+  val BR_PE = Territory(323, "Pernambuco", Some(BRA))
+  val BR_AP = Territory(324, "Amapa", Some(BRA))
+  val BR_CE = Territory(325, "Ceara", Some(BRA))
+  val BR_AC = Territory(326, "Acre", Some(BRA))
+  val BR_PR = Territory(327, "Parana", Some(BRA))
+  val BR_RR = Territory(328, "Roraima", Some(BRA))
+  val BR_RO = Territory(329, "Rondonia", Some(BRA))
+  val BR_SP = Territory(330, "Sao Paulo", Some(BRA))
+  val BR_PI = Territory(331, "Piaui", Some(BRA))
+  val BR_TO = Territory(332, "Tocantins", Some(BRA))
+  val BR_RS = Territory(333, "Rio Grande do Sul", Some(BRA))
+  val BR_MA = Territory(334, "Maranhao", Some(BRA))
+  val BR_GO = Territory(335, "Goias", Some(BRA))
+  val BR_MS = Territory(336, "Mato Grosso do Sul", Some(BRA))
+  val BR_BA = Territory(337, "Bahia", Some(BRA))
+  val BR_MG = Territory(338, "Minas Gerais", Some(BRA))
+  val BR_MT = Territory(339, "Mato Grosso", Some(BRA))
+  val BR_PA = Territory(340, "Para", Some(BRA))
+  val BR_AM = Territory(341, "Amazonas", Some(BRA))
+  val US_DC = Territory(342, "District of Columbia", Some(USA))
+  val US_RI = Territory(343, "Rhode Island", Some(USA))
+  val US_DE = Territory(344, "Delaware", Some(USA))
+  val US_CT = Territory(345, "Connecticut", Some(USA))
+  val US_NJ = Territory(346, "New Jersey", Some(USA))
+  val US_NH = Territory(347, "New Hampshire", Some(USA))
+  val US_VT = Territory(348, "Vermont", Some(USA))
+  val US_MA = Territory(349, "Massachusetts", Some(USA))
+  val US_HI = Territory(350, "Hawaii", Some(USA), Array("US-MID"))
+  val US_MD = Territory(351, "Maryland", Some(USA))
+  val US_WV = Territory(352, "West Virginia", Some(USA))
+  val US_SC = Territory(353, "South Carolina", Some(USA))
+  val US_ME = Territory(354, "Maine", Some(USA))
+  val US_IN = Territory(355, "Indiana", Some(USA))
+  val US_KY = Territory(356, "Kentucky", Some(USA))
+  val US_TN = Territory(357, "Tennessee", Some(USA))
+  val US_VA = Territory(358, "Virginia", Some(USA))
+  val US_OH = Territory(359, "Ohio", Some(USA))
+  val US_PA = Territory(360, "Pennsylvania", Some(USA))
+  val US_MS = Territory(361, "Mississippi", Some(USA))
+  val US_LA = Territory(362, "Louisiana", Some(USA))
+  val US_AL = Territory(363, "Alabama", Some(USA))
+  val US_AR = Territory(364, "Arkansas", Some(USA))
+  val US_NC = Territory(365, "North Carolina", Some(USA))
+  val US_NY = Territory(366, "New York", Some(USA))
+  val US_IA = Territory(367, "Iowa", Some(USA))
+  val US_IL = Territory(368, "Illinois", Some(USA))
+  val US_GA = Territory(369, "Georgia", Some(USA))
+  val US_WI = Territory(370, "Wisconsin", Some(USA))
+  val US_FL = Territory(371, "Florida", Some(USA))
+  val US_MO = Territory(372, "Missouri", Some(USA))
+  val US_OK = Territory(373, "Oklahoma", Some(USA))
+  val US_ND = Territory(374, "North Dakota", Some(USA))
+  val US_WA = Territory(375, "Washington", Some(USA))
+  val US_SD = Territory(376, "South Dakota", Some(USA))
+  val US_NE = Territory(377, "Nebraska", Some(USA))
+  val US_KS = Territory(378, "Kansas", Some(USA))
+  val US_ID = Territory(379, "Idaho", Some(USA))
+  val US_UT = Territory(380, "Utah", Some(USA))
+  val US_MN = Territory(381, "Minnesota", Some(USA))
+  val US_MI = Territory(382, "Michigan", Some(USA))
+  val US_WY = Territory(383, "Wyoming", Some(USA))
+  val US_OR = Territory(384, "Oregon", Some(USA))
+  val US_CO = Territory(385, "Colorado", Some(USA))
+  val US_NV = Territory(386, "Nevada", Some(USA))
+  val US_AZ = Territory(387, "Arizona", Some(USA))
+  val US_NM = Territory(388, "New Mexico", Some(USA))
+  val US_MT = Territory(389, "Montana", Some(USA))
+  val US_CA = Territory(390, "California", Some(USA))
+  val US_TX = Territory(391, "Texas", Some(USA))
+  val US_AK = Territory(392, "Alaska", Some(USA))
+  val CA_BC = Territory(393, "British Columbia", Some(CAN))
+  val CA_AB = Territory(394, "Alberta", Some(CAN))
+  val CA_ON = Territory(395, "Ontario", Some(CAN))
+  val CA_QC = Territory(396, "Quebec", Some(CAN))
+  val CA_SK = Territory(397, "Saskatchewan", Some(CAN))
+  val CA_MB = Territory(398, "Manitoba", Some(CAN))
+  val CA_NL = Territory(399, "Newfoundland", Some(CAN))
+  val CA_NB = Territory(400, "New Brunswick", Some(CAN))
+  val CA_NS = Territory(401, "Nova Scotia", Some(CAN))
+  val CA_PE = Territory(402, "Prince Edward Island", Some(CAN))
+  val CA_YT = Territory(403, "Yukon", Some(CAN))
+  val CA_NT = Territory(404, "Northwest Territories", Some(CAN))
+  val CA_NU = Territory(405, "Nunavut", Some(CAN))
+  val RU_MOW = Territory(411, "Moscow", Some(RUS))
+  val RU_SPE = Territory(412, "Saint Petersburg", Some(RUS))
+  val RU_KGD = Territory(413, "Kaliningrad Oblast", Some(RUS))
+  val RU_IN = Territory(414, "Ingushetia Republic", Some(RUS))
+  val RU_AD = Territory(415, "Adygea Republic", Some(RUS))
+  val RU_SE = Territory(416, "North Ossetia-Alania Republic", Some(RUS))
+  val RU_KB = Territory(417, "Kabardino-Balkar Republic", Some(RUS))
+  val RU_KC = Territory(418, "Karachay-Cherkess Republic", Some(RUS))
+  val RU_CE = Territory(419, "Chechen Republic", Some(RUS))
+  val RU_CU = Territory(420, "Chuvash Republic", Some(RUS))
+  val RU_IVA = Territory(421, "Ivanovo Oblast", Some(RUS))
+  val RU_LIP = Territory(422, "Lipetsk Oblast", Some(RUS))
+  val RU_ORL = Territory(423, "Oryol Oblast", Some(RUS))
+  val RU_TUL = Territory(424, "Tula Oblast", Some(RUS))
+  val RU_BE = Territory(425, "Belgorod Oblast", Some(RUS), Array("RU-BEL"))
+  val RU_VLA = Territory(426, "Vladimir Oblast", Some(RUS))
+  val RU_KRS = Territory(427, "Kursk Oblast", Some(RUS))
+  val RU_KLU = Territory(428, "Kaluga Oblast", Some(RUS))
+  val RU_TT = Territory(429, "Tambov Oblast", Some(RUS), Array("RU-TAM"))
+  val RU_BRY = Territory(430, "Bryansk Oblast", Some(RUS))
+  val RU_YAR = Territory(431, "Yaroslavl Oblast", Some(RUS))
+  val RU_RYA = Territory(432, "Ryazan Oblast", Some(RUS))
+  val RU_AST = Territory(433, "Astrakhan Oblast", Some(RUS))
+  val RU_MOS = Territory(434, "Moscow Oblast", Some(RUS))
+  val RU_SMO = Territory(435, "Smolensk Oblast", Some(RUS))
+  val RU_DA = Territory(436, "Dagestan Republic", Some(RUS))
+  val RU_VOR = Territory(437, "Voronezh Oblast", Some(RUS))
+  val RU_NGR = Territory(438, "Novgorod Oblast", Some(RUS))
+  val RU_PSK = Territory(439, "Pskov Oblast", Some(RUS))
+  val RU_KOS = Territory(440, "Kostroma Oblast", Some(RUS))
+  val RU_STA = Territory(441, "Stavropol Krai", Some(RUS))
+  val RU_KDA = Territory(442, "Krasnodar Krai", Some(RUS))
+  val RU_KL = Territory(443, "Kalmykia Republic", Some(RUS))
+  val RU_TVE = Territory(444, "Tver Oblast", Some(RUS))
+  val RU_LEN = Territory(445, "Leningrad Oblast", Some(RUS))
+  val RU_ROS = Territory(446, "Rostov Oblast", Some(RUS))
+  val RU_VGG = Territory(447, "Volgograd Oblast", Some(RUS))
+  val RU_VLG = Territory(448, "Vologda Oblast", Some(RUS))
+  val RU_MUR = Territory(449, "Murmansk Oblast", Some(RUS))
+  val RU_KR = Territory(450, "Karelia Republic", Some(RUS))
+  val RU_NEN = Territory(451, "Nenets Autonomous Okrug", Some(RUS))
+  val RU_KO = Territory(452, "Komi Republic", Some(RUS))
+  val RU_ARK = Territory(453, "Arkhangelsk Oblast", Some(RUS))
+  val RU_MO = Territory(454, "Mordovia Republic", Some(RUS))
+  val RU_NIZ = Territory(455, "Nizhny Novgorod Oblast", Some(RUS))
+  val RU_PNZ = Territory(456, "Penza Oblast", Some(RUS))
+  val RU_KI = Territory(457, "Kirov Oblast", Some(RUS), Array("RU-KIR"))
+  val RU_ME = Territory(458, "Mari El Republic", Some(RUS))
+  val RU_ORE = Territory(459, "Orenburg Oblast", Some(RUS))
+  val RU_ULY = Territory(460, "Ulyanovsk Oblast", Some(RUS))
+  val RU_PM = Territory(461, "Perm Krai", Some(RUS), Array("RU-PER"))
+  val RU_BA = Territory(462, "Bashkortostan Republic", Some(RUS))
+  val RU_UD = Territory(463, "Udmurt Republic", Some(RUS))
+  val RU_TA = Territory(464, "Tatarstan Republic", Some(RUS))
+  val RU_SAM = Territory(465, "Samara Oblast", Some(RUS))
+  val RU_SAR = Territory(466, "Saratov Oblast", Some(RUS))
+  val RU_YAN = Territory(467, "Yamalo-Nenets", Some(RUS))
+  val RU_KM = Territory(468, "Khanty-Mansi", Some(RUS), Array("RU-KHM"))
+  val RU_SVE = Territory(469, "Sverdlovsk Oblast", Some(RUS))
+  val RU_TYU = Territory(470, "Tyumen Oblast", Some(RUS))
+  val RU_KGN = Territory(471, "Kurgan Oblast", Some(RUS))
+  val RU_CH = Territory(472, "Chelyabinsk Oblast", Some(RUS), Array("RU-CHE"))
+  val RU_BU = Territory(473, "Buryatia Republic", Some(RUS))
+  val RU_ZAB = Territory(474, "Zabaykalsky Krai", Some(RUS))
+  val RU_IRK = Territory(475, "Irkutsk Oblast", Some(RUS))
+  val RU_NVS = Territory(476, "Novosibirsk Oblast", Some(RUS))
+  val RU_TOM = Territory(477, "Tomsk Oblast", Some(RUS))
+  val RU_OMS = Territory(478, "Omsk Oblast", Some(RUS))
+  val RU_KK = Territory(479, "Khakassia Republic", Some(RUS))
+  val RU_KEM = Territory(480, "Kemerovo Oblast", Some(RUS))
+  val RU_AL = Territory(481, "Altai Republic", Some(RUS))
+  val RU_ALT = Territory(482, "Altai Krai", Some(RUS))
+  val RU_TY = Territory(483, "Tuva Republic", Some(RUS))
+  val RU_KYA = Territory(484, "Krasnoyarsk Krai", Some(RUS))
+  val RU_MAG = Territory(485, "Magadan Oblast", Some(RUS))
+  val RU_CHU = Territory(486, "Chukotka Okrug", Some(RUS))
+  val RU_KAM = Territory(487, "Kamchatka Krai", Some(RUS))
+  val RU_SAK = Territory(488, "Sakhalin Oblast", Some(RUS))
+  val RU_PO = Territory(489, "Primorsky Krai", Some(RUS), Array("RU-PRI"))
+  val RU_YEV = Territory(490, "Jewish Autonomous Oblast", Some(RUS))
+  val RU_KHA = Territory(491, "Khabarovsk Krai", Some(RUS))
+  val RU_AMU = Territory(492, "Amur Oblast", Some(RUS))
+  val RU_SA = Territory(493, "Sakha Republic", Some(RUS), Array.empty, Array("Yakutia Republic"))
+  val CN_SH = Territory(496, "Shanghai", Some(CHN), Array("CN-31"))
+  val CN_TJ = Territory(497, "Tianjin", Some(CHN), Array("CN-12"))
+  val CN_BJ = Territory(498, "Beijing", Some(CHN), Array("CN-11"))
+  val CN_HI = Territory(499, "Hainan", Some(CHN), Array("CN-46"))
+  val CN_NX = Territory(500, "Ningxia Hui", Some(CHN), Array("CN-64"))
+  val CN_CQ = Territory(501, "Chongqing", Some(CHN), Array("CN-50"))
+  val CN_ZJ = Territory(502, "Zhejiang", Some(CHN), Array("CN-33"))
+  val CN_JS = Territory(503, "Jiangsu", Some(CHN), Array("CN-32"))
+  val CN_FJ = Territory(504, "Fujian", Some(CHN), Array("CN-35"))
+  val CN_AH = Territory(505, "Anhui", Some(CHN), Array("CN-34"))
+  val CN_LN = Territory(506, "Liaoning", Some(CHN), Array("CN-21"))
+  val CN_SD = Territory(507, "Shandong", Some(CHN), Array("CN-37"))
+  val CN_SX = Territory(508, "Shanxi", Some(CHN), Array("CN-14"))
+  val CN_JX = Territory(509, "Jiangxi", Some(CHN), Array("CN-36"))
+  val CN_HA = Territory(510, "Henan", Some(CHN), Array("CN-41"))
+  val CN_GZ = Territory(511, "Guizhou", Some(CHN), Array("CN-52"))
+  val CN_GD = Territory(512, "Guangdong", Some(CHN), Array("CN-44"))
+  val CN_HB = Territory(513, "Hubei", Some(CHN), Array("CN-42"))
+  val CN_JL = Territory(514, "Jilin", Some(CHN), Array("CN-22"))
+  val CN_HE = Territory(515, "Hebei", Some(CHN), Array("CN-13"))
+  val CN_SN = Territory(516, "Shaanxi", Some(CHN), Array("CN-61"))
+  val CN_NM = Territory(517, "Nei Mongol", Some(CHN), Array("CN-15"), Array("Inner Mongolia"))
+  val CN_HL = Territory(518, "Heilongjiang", Some(CHN), Array("CN-23"))
+  val CN_HN = Territory(519, "Hunan", Some(CHN), Array("CN-43"))
+  val CN_GX = Territory(520, "Guangxi Zhuang", Some(CHN), Array("CN-45"))
+  val CN_SC = Territory(521, "Sichuan", Some(CHN), Array("CN-51"))
+  val CN_YN = Territory(522, "Yunnan", Some(CHN), Array("CN-53"))
+  val CN_XZ = Territory(523, "Xizang", Some(CHN), Array("CN-54"), Array("Tibet"))
+  val CN_GS = Territory(524, "Gansu", Some(CHN), Array("CN-62"))
+  val CN_QH = Territory(525, "Qinghai", Some(CHN), Array("CN-63"))
+  val CN_XJ = Territory(526, "Xinjiang Uyghur", Some(CHN), Array("CN-65"))
   val UMI = Territory(528, "United States Minor Outlying Islands", None, Array("US-UM", "USA-UM", "JTN"))
   val CPT = Territory(529, "Clipperton Island")
-  val AT0 = Territory(530, "Macquarie Island", Some(ParentTerritory.ATA))
-  val AT1 = Territory(531, "Ross Dependency", Some(ParentTerritory.ATA))
-  val AT2 = Territory(532, "Adelie Land", Some(ParentTerritory.ATA))
-  val AT3 = Territory(533, "Australian Antarctic Territory", Some(ParentTerritory.ATA))
-  val AT4 = Territory(534, "Queen Maud Land", Some(ParentTerritory.ATA))
-  val AT5 = Territory(535, "British Antarctic Territory", Some(ParentTerritory.ATA))
-  val AT6 = Territory(536, "Chile Antartica", Some(ParentTerritory.ATA))
-  val AT7 = Territory(537, "Argentine Antarctica", Some(ParentTerritory.ATA))
-  val AT8 = Territory(538, "Peter 1 Island", Some(ParentTerritory.ATA))
+  val AT0 = Territory(530, "Macquarie Island", Some(ATA))
+  val AT1 = Territory(531, "Ross Dependency", Some(ATA))
+  val AT2 = Territory(532, "Adelie Land", Some(ATA))
+  val AT3 = Territory(533, "Australian Antarctic Territory", Some(ATA))
+  val AT4 = Territory(534, "Queen Maud Land", Some(ATA))
+  val AT5 = Territory(535, "British Antarctic Territory", Some(ATA))
+  val AT6 = Territory(536, "Chile Antartica", Some(ATA))
+  val AT7 = Territory(537, "Argentine Antarctica", Some(ATA))
+  val AT8 = Territory(538, "Peter 1 Island", Some(ATA))
   val AAA = Territory(540, "International", None, Array.empty, Array("Worldwide", "Earth"))
-
-  lazy val territories = values.toSeq.map(_.asInstanceOf[Territory])
-
-  def fromTerritoryCode(territoryCode: Int): Option[Territory] = codeList.get(territoryCode)
-
-  @throws[UnknownTerritoryException]
-  def fromString(name: String, parentTerritory: Option[Territory] = None): Territory =
-    createFromString(name, parentTerritory)
-
-  @throws[UnknownTerritoryException]
-  def createFromString(name: String, parentTerritory: Option[Territory]): Territory = {
-    parentTerritory.foreach(pt => require(ParentTerritory.values.contains(pt)))
-    val trimmed = name.trim
-    (nameMap.get(trimmed), parentTerritory) match {
-      case (Some(terrs), None) => terrs.head
-      case (Some(terrs), parent@Some(_)) =>
-        territories.find(_.parentTerritory == parent).getOrElse(throw new UnknownTerritoryException(trimmed))
-      case _ =>
-        // Check for a case such as USA-NLD (=NLD)
-        val dividerLocation = Math.max(trimmed.indexOf('-'), trimmed.indexOf(' '))
-        if (dividerLocation >= 0) createFromString(trimmed.substring(dividerLocation + 1), parentTerritory)
-        else throw new UnknownTerritoryException(trimmed)
-    }
-  }
-
-  // private implementation
-
-  private val codeList: Map[Int, Territory] = territories.map(t => t.id -> t).toMap
-  private val nameMap: Map[String, Seq[Territory]] = null
-
-  private[scala] def addNameWithParentVariants(nameMap: Map[String, Seq[Territory]],
-                                name: String,
-                                territory: Territory): Map[String, Seq[Territory]] = {
-
-    val result = addNameWithSeparatorVariants(nameMap, name, territory)
-    if (name.contains("-")) {
-      val childTerritoryName = name.substring(name.indexOf('-') + 1)
-      val result2 = addName(result, childTerritoryName, territory)
-      territory.parentTerritory match {
-        case Some(parent) =>
-          val nameVariant = parent.name + '-' + childTerritoryName
-
-          val result3 = if (nameVariant != name) {
-            // Add the variant using the primary parent name.
-            addNameWithSeparatorVariants(result2, nameVariant, territory)
-          } else result2
-
-          // Add each variant using the parent alias names.
-          parent.aliases.map(_ + '-' + childTerritoryName).filterNot(_ == name).foldLeft(result3) {
-            case (nameMp, nameV) => addNameWithSeparatorVariants(nameMp, nameV, territory)
-          }
-        case None => result2
-      }
-    } else result
-  }
-
-  private[scala] def addNameWithSeparatorVariants(nameMap: Map[String, Seq[Territory]],
-                                   name: String,
-                                   territory: Territory): Map[String, Seq[Territory]] = {
-    val result = addName(nameMap, name, territory)
-    if (name.contains("-")) addName(result, name.replace('-', ' '), territory)
-    else result
-  }
-
-
-  private[scala] def addName(nameMap: Map[String, Seq[Territory]], name: String, territory: Territory): Map[String, Seq[Territory]] = {
-    nameMap.get(name) match {
-      case Some(terrs) =>
-        territory.parentTerritory match {
-          case None if name == territory.name => (nameMap - name) + (name -> Seq(territory))
-          case Some(parent) =>
-            // case 1: there is a territory with this name with no parent; do nothing
-            if (terrs.exists(t => t.name == name && t.parentTerritory.isEmpty)) nameMap
-            else if (terrs.exists(t => t.name == name && t.id > territory.id)) {
-              // case 2: there is a territory with this name but with a higher id; in that
-              //         case we insert this territory before that one, and we're done
-              val (front, back) = terrs.span(t => t.name != name || t.id <= territory.id)
-              (nameMap - name) + (name -> ((front :+ territory) ++ back))
-            } else {
-              // case 3: otherwise we just append this territory to the list
-              nameMap + (name -> Seq(territory))
-            }
-        }
-      case None => nameMap + (name -> Seq(territory))
-    }
-  }
-
 }
 
