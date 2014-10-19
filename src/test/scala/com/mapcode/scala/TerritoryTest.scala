@@ -63,7 +63,7 @@ class TerritoryTest extends FunSuite with Matchers {
   }
 
 
-  test("exception addName behavior") {
+  test("exceptional addName behavior") {
     val myTerritories = new TerritoryOperations {
       val USA1 = Territory(409, "USA", None, Array("US"), Array("United States of America", "America"))
       val USA2 = Territory(409, "USA", None, Array("US"), Array("United States of America", "America"))

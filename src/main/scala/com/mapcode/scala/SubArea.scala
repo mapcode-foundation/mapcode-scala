@@ -16,10 +16,10 @@
 
 package com.mapcode.scala
 
-case class SubArea(latRange: Range,
-                   lonRange: Range,
-                   boundedLatRange: Seq[Range],
-                   boundedLonRange: Seq[Range],
+case class SubArea(latRange: Range[Int],
+                   lonRange: Range[Int],
+                   boundedLatRange: Seq[Range[Int]],
+                   boundedLonRange: Seq[Range[Int]],
                    parentTerritory: Territory.Territory,
                    subAreaID: Integer)
 
