@@ -4,7 +4,7 @@ package com.mapcode.scala
  * Created by ebowman on 19/10/14.
  */
 object TerritoryFixture extends TerritoryOperations {
-  val USA = Territory(409, "USA", None, Array("US"), Array("United States of America", "America"))
+  val USA = Territory(409, "USA", None, Seq("US"), Seq("United States of America", "America"))
   val US_DC = Territory(342, "District of Columbia", Some(USA))
   val US_RI = Territory(343, "Rhode Island", Some(USA))
   val US_DE = Territory(344, "Delaware", Some(USA))
@@ -13,7 +13,7 @@ object TerritoryFixture extends TerritoryOperations {
   val US_NH = Territory(347, "New Hampshire", Some(USA))
   val US_VT = Territory(348, "Vermont", Some(USA))
   val US_MA = Territory(349, "Massachusetts", Some(USA))
-  val US_HI = Territory(350, "Hawaii", Some(USA), Array("US-MID"))
+  val US_HI = Territory(350, "Hawaii", Some(USA), Seq("US-MID"))
   val US_MD = Territory(351, "Maryland", Some(USA))
   val US_WV = Territory(352, "West Virginia", Some(USA))
   val US_SC = Territory(353, "South Carolina", Some(USA))

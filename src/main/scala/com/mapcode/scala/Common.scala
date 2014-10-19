@@ -15,8 +15,7 @@
  */
 package com.mapcode.scala
 
-// todo put private back
-object Common {
+private[scala] object Common {
   val nc = Array(1, 31, 961, 29791, 923521, 28629151, 887503681)
   val xSide = Array(0, 5, 31, 168, 961, 168 * 31, 29791, 165869, 923521, 5141947)
   val ySide = Array(0, 6, 31, 176, 961, 176 * 31, 29791, 165869, 923521, 5141947)

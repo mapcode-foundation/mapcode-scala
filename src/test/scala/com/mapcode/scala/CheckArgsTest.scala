@@ -35,9 +35,8 @@ class CheckArgsTest extends FunSuite with Matchers with GeneratorDrivenPropertyC
   test("test intersection") {
     forAll {
       (value: Double, range: (Double, Double)) => {
-        whenever(value >= range._1 && value <= range._2) {
-          CheckArgs.checkRange("", value, range._1, range._2)
-        }
+        if (value >= range._1 && value <= range._2) CheckArgs.checkRange("", value, range._1, range._2)
+        else an[IllegalArgumentException] should be thrownBy CheckArgs.checkRange("", value, range._1, range._2)
       }
     }
   }
