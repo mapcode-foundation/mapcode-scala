@@ -32,21 +32,15 @@ private[scala] case class Data(flags: Int,
                                mapcoderRect: Option[SubArea])
 
 private[scala] object Data {
-  def isNameless(i: Int): Boolean = (DataAccess.dataFlags(i) & 64) != 0
-
-  def isSpecialShape(i: Int): Boolean = (DataAccess.dataFlags(i) & 1024) != 0
+  val ENCODE_CHARS: Array[Char] = Array(
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+    'B', 'C', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M',
+    'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'X', 'Y', 'Z')
 
   def calcCodex(i: Int): Int = {
     val flags = DataAccess.dataFlags(i)
     calcCodex(calcCodexHi(flags), calcCodexLo(flags))
   }
-
-  def calcCodexLen(i: Int): Int = {
-    val flags: Int = DataAccess.dataFlags(i)
-    calcCodexLen(calcCodexHi(flags), calcCodexLo(flags))
-  }
-
-  def calcStarPipe(i: Int): Boolean = (DataAccess.dataFlags(i) & (8 << 5)) != 0
 
   def calcCodexHi(flags: Int): Int = (flags & 31) / 5
 
@@ -54,12 +48,10 @@ private[scala] object Data {
 
   def calcCodex(codexhi: Int, codexlo: Int): Int = (10 * codexhi) + codexlo
 
-  def calcCodexLen(codexhi: Int, codexlo: Int): Int = codexhi + codexlo
-
-  val ENCODE_CHARS: Array[Char] = Array(
-    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-    'B', 'C', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M',
-    'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'X', 'Y', 'Z')
+  def calcCodexLen(i: Int): Int = {
+    val flags: Int = DataAccess.dataFlags(i)
+    calcCodexLen(calcCodexHi(flags), calcCodexLo(flags))
+  }
 
   def apply(i: Int): Data = {
     val flags = DataAccess.dataFlags(i)
@@ -87,6 +79,14 @@ private[scala] object Data {
       nameless = nameless, useless = useless, specialShape = specialShape, pipeType = pipeType, pipeLetter = pipeLetter,
       starPipe = starPipe, mapcoderRect = mapcoderRect)
   }
+
+  def isNameless(i: Int): Boolean = (DataAccess.dataFlags(i) & 64) != 0
+
+  def isSpecialShape(i: Int): Boolean = (DataAccess.dataFlags(i) & 1024) != 0
+
+  def calcStarPipe(i: Int): Boolean = (DataAccess.dataFlags(i) & (8 << 5)) != 0
+
+  def calcCodexLen(codexhi: Int, codexlo: Int): Int = codexhi + codexlo
 }
 
 

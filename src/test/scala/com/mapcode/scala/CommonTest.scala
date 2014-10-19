@@ -4,8 +4,6 @@ import org.scalacheck.Gen
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import org.scalatest.{FunSuite, Matchers}
 
-import scala.util.{Failure, Success, Try}
-
 class CommonTest extends FunSuite with Matchers with GeneratorDrivenPropertyChecks {
   test("xDivider implementation matches") {
     an[IllegalArgumentException] should be thrownBy Common.xDivider((0xAB << 19) + 1, 0)

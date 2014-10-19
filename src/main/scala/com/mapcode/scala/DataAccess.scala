@@ -20,43 +20,7 @@ package com.mapcode.scala
  */
 private[scala] object DataAccess {
 
-  def asUnsignedByte(i: Int): Int = {
-    require(i >= 0 && i < FILE_DATA.length, s"asUnsignedByte arg $i is out of range: [0, ${FILE_DATA.length})")
-    val u = FILE_DATA(i)
-    if (u < 0) u + 256
-    else u
-  }
-
-  def dataFlags(i: Int): Int = {
-    require(i >= 0 && i < DataAccess.FILE_DATA.length / 20,
-      s"dataFlags argument $i is out of range [0, ${DataAccess.FILE_DATA.length / 20}})")
-    asUnsignedByte((i * 20) + 16) + asUnsignedByte((i * 20) + 17) * 256
-  }
-
-  def asLong(i: Int): Int = {
-    require(i >= 0 && i < DataAccess.FILE_DATA.length,
-      s"asLong argument $i is out of range [0, ${DataAccess.FILE_DATA.length}})")
-    asUnsignedByte(i) + (asUnsignedByte(i + 1) << 8) + (asUnsignedByte(i + 2) << 16) + (asUnsignedByte(i + 3) << 24)
-  }
-
-  def smartDiv(i: Int): Int = {
-    require(i >= 0 && i < DataAccess.FILE_DATA.length / 20,
-      s"smartDiv argument $i is out of range [0, ${DataAccess.FILE_DATA.length / 20}})")
-    asUnsignedByte((i * 20) + 18) + (asUnsignedByte((i * 20) + 19) * 256)
-  }
-
-  def dataFirstRecord(ccode: Int): Int = {
-    require(ccode >= 0 && ccode < DATA_START.length, s"ccode $ccode is out of range [0, ${DATA_START.length})")
-    DATA_START(ccode)
-  }
-
-  def dataLastRecord(ccode: Int): Int = {
-    require(ccode >= -1 && ccode < DATA_START.length - 1, s"ccode $ccode is out of range [-1, ${DATA_START.length - 1})")
-    DATA_START(ccode + 1) - 1
-  }
-
   lazy val numberOfSubAreas: Int = DATA_START.last
-
   private[scala] val FILE_DATA: Array[Byte] = {
     val source = getClass.getResourceAsStream("/com/mapcode/scala/mminfo.dat")
     try {
@@ -65,7 +29,6 @@ private[scala] object DataAccess {
       source.close()
     }
   }
-
   private[scala] val DATA_START = Array[Int](
     0, 3, 6, 9, 13, 16, 18, 19, 30, 31, 33, 35, 37, 42, 44, 47, 51, 54, 56, 58, 60, 62, 64, 68, 71, 79, 81, 116,
     121, 131, 133, 135, 138, 143, 155, 159, 165, 167, 169, 173, 176, 183, 185, 187, 189, 193, 195, 202, 208, 212,
@@ -99,5 +62,40 @@ private[scala] object DataAccess {
     15417, 15423, 15439, 15476, 15493, 15517, 15540, 15557, 15577, 15603, 15629, 15648, 15665, 15718, 15759,
     15781, 15808, 15828, 15849, 15867, 15897, 15923, 15943, 15964, 15982, 16000, 16019, 16035, 16051, 16079,
     16105, 16112, 16114, 16115, 16117, 16118, 16120, 16122, 16124, 16126, 16128, 16129, 16130, 16162)
+
+  def dataFlags(i: Int): Int = {
+    require(i >= 0 && i < DataAccess.FILE_DATA.length / 20,
+      s"dataFlags argument $i is out of range [0, ${DataAccess.FILE_DATA.length / 20}})")
+    asUnsignedByte((i * 20) + 16) + asUnsignedByte((i * 20) + 17) * 256
+  }
+
+  def asLong(i: Int): Int = {
+    require(i >= 0 && i < DataAccess.FILE_DATA.length,
+      s"asLong argument $i is out of range [0, ${DataAccess.FILE_DATA.length}})")
+    asUnsignedByte(i) + (asUnsignedByte(i + 1) << 8) + (asUnsignedByte(i + 2) << 16) + (asUnsignedByte(i + 3) << 24)
+  }
+
+  def smartDiv(i: Int): Int = {
+    require(i >= 0 && i < DataAccess.FILE_DATA.length / 20,
+      s"smartDiv argument $i is out of range [0, ${DataAccess.FILE_DATA.length / 20}})")
+    asUnsignedByte((i * 20) + 18) + (asUnsignedByte((i * 20) + 19) * 256)
+  }
+
+  def asUnsignedByte(i: Int): Int = {
+    require(i >= 0 && i < FILE_DATA.length, s"asUnsignedByte arg $i is out of range: [0, ${FILE_DATA.length})")
+    val u = FILE_DATA(i)
+    if (u < 0) u + 256
+    else u
+  }
+
+  def dataFirstRecord(ccode: Int): Int = {
+    require(ccode >= 0 && ccode < DATA_START.length, s"ccode $ccode is out of range [0, ${DATA_START.length})")
+    DATA_START(ccode)
+  }
+
+  def dataLastRecord(ccode: Int): Int = {
+    require(ccode >= -1 && ccode < DATA_START.length - 1, s"ccode $ccode is out of range [-1, ${DATA_START.length - 1})")
+    DATA_START(ccode + 1) - 1
+  }
 }
 

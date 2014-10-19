@@ -30,13 +30,53 @@ trait TerritoryOperations extends Enumeration {
 
   import com.mapcode.scala.NameFormat.NameFormat
 
+  lazy val territories: Seq[Territory] = values.toSeq.map(_.asInstanceOf[Territory])
+  private[scala] lazy val codeList: Map[Int, Territory] = territories.map(t => t.id -> t).toMap
+  private[scala] lazy val nameMap: Map[String, Seq[Territory]] = {
+    def populateTerritory(map: Map[String, Seq[Territory]], territory: Territory): Map[String, Seq[Territory]] = {
+      territory.allNames.foldLeft(map)(addName(territory))
+    }
+    territories.foldLeft(Map[String, Seq[Territory]]())(populateTerritory)
+  }
+
+  // private implementation
+  private[scala] lazy val parentTerritories: Set[Territory] = territories.flatMap(_.parentTerritory).toSet
+
+  def fromTerritoryCode(territoryCode: Int): Option[Territory] = codeList.get(territoryCode)
+
+  def fromString(name: String, parentTerritory: Option[Territory] = None): Option[Territory] = {
+    parentTerritory.foreach(pt => require(parentTerritories.contains(pt)))
+    val trimmed = name.trim
+    (nameMap.get(trimmed), parentTerritory) match {
+      case (Some(terrs), None) => terrs.headOption
+      case (Some(terrs), parent@Some(_)) =>
+        terrs.find(_.parentTerritory == parent)
+      case _ =>
+        // Check for a case such as USA-NLD (=NLD)
+        val dividerLocation = Math.max(trimmed.indexOf('-'), trimmed.indexOf(' '))
+        if (dividerLocation >= 0) fromString(trimmed.substring(dividerLocation + 1), parentTerritory)
+        else None
+    }
+  }
+
+  private[scala] def addName(territory: Territory)
+                            (nameMap: Map[String, Seq[Territory]], name: String): Map[String, Seq[Territory]] = {
+    // Add child territories in the order the parents are declared.
+    // This results in consistent decoding of ambiguous territory names.
+    nameMap.get(name) match {
+      case Some(terrs) =>
+        territory.parentTerritory.map { parent =>
+          (nameMap - name) + (name -> (terrs :+ territory).distinct)
+        }.getOrElse(sys.error("You can't have multiple top-level territories with the same name"))
+      case None => nameMap + (name -> Seq(territory))
+    }
+  }
+
   case class Territory(territoryCode: Int,
                        fullName: String,
                        parentTerritory: Option[Territory] = None,
                        aliases: Array[String] = Array.empty,
                        fullNameAliases: Array[String] = Array.empty) extends Val {
-
-    def name = toString().replaceAll("_", "-")
 
     /**
      * Return the territory name, given a specific territory name format.
@@ -56,6 +96,8 @@ trait TerritoryOperations extends Enumeration {
           else name
       }
     }
+
+    def name = toString().replaceAll("_", "-")
 
     def isState: Boolean = parentTerritory.isDefined
 
@@ -78,51 +120,6 @@ trait TerritoryOperations extends Enumeration {
         fullNameAliases).distinct
     }
   }
-
-  def fromTerritoryCode(territoryCode: Int): Option[Territory] = codeList.get(territoryCode)
-
-  def fromString(name: String, parentTerritory: Option[Territory] = None): Option[Territory] = {
-    parentTerritory.foreach(pt => require(parentTerritories.contains(pt)))
-    val trimmed = name.trim
-    (nameMap.get(trimmed), parentTerritory) match {
-      case (Some(terrs), None) => terrs.headOption
-      case (Some(terrs), parent@Some(_)) =>
-        terrs.find(_.parentTerritory == parent)
-      case _ =>
-        // Check for a case such as USA-NLD (=NLD)
-        val dividerLocation = Math.max(trimmed.indexOf('-'), trimmed.indexOf(' '))
-        if (dividerLocation >= 0) fromString(trimmed.substring(dividerLocation + 1), parentTerritory)
-        else None
-    }
-  }
-
-  // private implementation
-
-  private[scala] lazy val codeList: Map[Int, Territory] = territories.map(t => t.id -> t).toMap
-
-  private[scala] lazy val nameMap: Map[String, Seq[Territory]] = {
-    def populateTerritory(map: Map[String, Seq[Territory]], territory: Territory): Map[String, Seq[Territory]] = {
-      territory.allNames.foldLeft(map)(addName(territory))
-    }
-    territories.foldLeft(Map[String, Seq[Territory]]())(populateTerritory)
-  }
-
-  private[scala] lazy val parentTerritories: Set[Territory] = territories.flatMap(_.parentTerritory).toSet
-
-  private[scala] def addName(territory: Territory)
-                            (nameMap: Map[String, Seq[Territory]], name: String): Map[String, Seq[Territory]] = {
-    // Add child territories in the order the parents are declared.
-    // This results in consistent decoding of ambiguous territory names.
-    nameMap.get(name) match {
-      case Some(terrs) =>
-        territory.parentTerritory.map { parent =>
-          (nameMap - name) + (name -> (terrs :+ territory).distinct)
-        }.getOrElse(sys.error("You can't have multiple top-level territories with the same name"))
-      case None => nameMap + (name -> Seq(territory))
-    }
-  }
-
-  lazy val territories: Seq[Territory] = values.toSeq.map(_.asInstanceOf[Territory])
 }
 
 /**

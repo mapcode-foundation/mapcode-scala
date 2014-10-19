@@ -302,8 +302,8 @@ class DataAccessTest extends FunSuite with Matchers with GeneratorDrivenProperty
   }
 
   test("dataFirstRecord") {
-    an [IllegalArgumentException] should be thrownBy DataAccess.dataFirstRecord(-1)
-    an [IllegalArgumentException] should be thrownBy DataAccess.dataFirstRecord(DataAccess.DATA_START.length)
+    an[IllegalArgumentException] should be thrownBy DataAccess.dataFirstRecord(-1)
+    an[IllegalArgumentException] should be thrownBy DataAccess.dataFirstRecord(DataAccess.DATA_START.length)
     val generator = Gen.choose(0, DataAccess.DATA_START.length - 1)
     forAll(generator) {
       code: Int =>
@@ -312,8 +312,8 @@ class DataAccessTest extends FunSuite with Matchers with GeneratorDrivenProperty
   }
 
   test("dataLastRecord") {
-    an [IllegalArgumentException] should be thrownBy DataAccess.dataLastRecord(-2)
-    an [IllegalArgumentException] should be thrownBy DataAccess.dataLastRecord(DataAccess.DATA_START.length - 1)
+    an[IllegalArgumentException] should be thrownBy DataAccess.dataLastRecord(-2)
+    an[IllegalArgumentException] should be thrownBy DataAccess.dataLastRecord(DataAccess.DATA_START.length - 1)
     val generator = Gen.choose(0, DataAccess.DATA_START.length - 1)
     forAll(generator) {
       code: Int =>

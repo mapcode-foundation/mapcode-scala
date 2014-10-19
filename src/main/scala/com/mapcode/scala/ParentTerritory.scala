@@ -20,6 +20,13 @@ package com.mapcode.scala
  * This class defines "parent territories" for territories that have multiple territory codes.
  */
 object ParentTerritory {
+  // this is a Seq instead of a Set because Set is invariant and we need covariance
+  // to break out TerritoryOperations from Territories.
+  // not sure a big deal since it's a tiny list.
+  // Note that we have a unit test that confirms this matches what is in
+  // the Territory object. This is really just for convenience; the same data
+  // can be accessed through Territory.territories.
+  lazy val values = Seq(IND, AUS, BRA, USA, MEX, CAN, RUS, CHN, ATA)
   val IND = Territory.IND
   val AUS = Territory.AUS
   val BRA = Territory.BRA
@@ -29,12 +36,4 @@ object ParentTerritory {
   val RUS = Territory.RUS
   val CHN = Territory.CHN
   val ATA = Territory.ATA
-
-  // this is a Seq instead of a Set because Set is invariant and we need covariance
-  // to break out TerritoryOperations from Territories.
-  // not sure a big deal since it's a tiny list.
-  // Note that we have a unit test that confirms this matches what is in
-  // the Territory object. This is really just for convenience; the same data
-  // can be accessed through Territory.territories.
-  lazy val values = Seq(IND, AUS, BRA, USA, MEX, CAN, RUS, CHN, ATA)
 }

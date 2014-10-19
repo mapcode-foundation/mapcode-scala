@@ -96,8 +96,8 @@ class PointTest extends FunSuite with Matchers with GeneratorDrivenPropertyCheck
   }
 
   test("distanceBetween") {
-    Point(90, 0) unitDistanceBetween Point(-90, 0) should be (math.Pi)
-    Point(90, 0) unitDistanceBetween Point(0, 0) should be (math.Pi/2)
+    Point(90, 0) unitDistanceBetween Point(-90, 0) should be(math.Pi)
+    Point(90, 0) unitDistanceBetween Point(0, 0) should be(math.Pi / 2)
   }
 
   test("fromUniformlyDistributedRandomPoints") {
@@ -109,7 +109,7 @@ class PointTest extends FunSuite with Matchers with GeneratorDrivenPropertyCheck
 
     // some utility functions
     def average(p: Seq[Double]) = p.sum / p.size
-    def sq(x: Double) = x*x
+    def sq(x: Double) = x * x
 
     val n = 1000
     // generated n random points

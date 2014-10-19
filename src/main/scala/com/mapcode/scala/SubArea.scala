@@ -16,8 +16,6 @@
 
 package com.mapcode.scala
 
-import org.slf4j.LoggerFactory
-
 case class SubArea(latRange: Range,
                    lonRange: Range,
                    boundedLatRange: Seq[Range],

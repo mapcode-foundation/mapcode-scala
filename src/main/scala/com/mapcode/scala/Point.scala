@@ -24,6 +24,29 @@ import scala.util.Random
  */
 private[scala] object Point {
   /**
+   * Create an undefined points. No latitude or longitude can be obtained from it.
+   * Only within the mapcode implementation points can be undefined, so this methods is package private.
+   *
+   * @return Undefined points.
+   */
+  private[mapcode] lazy val undefined: Point = Point(Double.NaN, Double.NaN)
+  val LON_DEG_MIN: Double = -180.0
+  val LON_DEG_MAX: Double = 180.0
+  val LAT_DEG_MIN: Double = -90.0
+  val LAT_DEG_MAX: Double = 90.0
+  val LON_MICRODEG_MIN: Int = degToMicroDeg(LON_DEG_MIN)
+  val LON_MICRODEG_MAX: Int = degToMicroDeg(LON_DEG_MAX)
+  val LAT_MICRODEG_MIN: Int = degToMicroDeg(LAT_DEG_MIN)
+  val LAT_MICRODEG_MAX: Int = degToMicroDeg(LAT_DEG_MAX)
+  val MICRODEG_TO_DEG_FACTOR: Double = 1000000.0
+  val EARTH_RADIUS_X_METERS: Double = 6378137.0
+  val EARTH_RADIUS_Y_METERS: Double = 6356752.3
+  val EARTH_CIRCUMFERENCE_X: Double = EARTH_RADIUS_X_METERS * 2.0 * math.Pi
+  val EARTH_CIRCUMFERENCE_Y: Double = EARTH_RADIUS_Y_METERS * 2.0 * math.Pi
+  val METERS_PER_DEGREE_LAT: Double = EARTH_CIRCUMFERENCE_Y / 360.0
+  val METERS_PER_DEGREE_LON_EQUATOR: Double = EARTH_CIRCUMFERENCE_X / 360.0
+
+  /**
    * Create a point from lat/lon in degrees.
    *
    * @param latDeg Longitude in degrees.
@@ -31,21 +54,6 @@ private[scala] object Point {
    * @return A defined point.
    */
   def fromDeg(latDeg: Double, lonDeg: Double): Point = new Point(latDeg, lonDeg)
-
-  /**
-   * Create a point from lat/lon in micro-degrees (i.e. degrees * 1,000,000).
-   *
-   * @param latMicroDeg Longitude in microdegrees.
-   * @param lonMicroDeg Latitude in microdegrees.
-   * @return A defined point.
-   */
-  def fromMicroDeg(latMicroDeg: Int, lonMicroDeg: Int): Point =
-    new Point(microDegToDeg(latMicroDeg), microDegToDeg(lonMicroDeg))
-
-  def degToMicroDeg(deg: Double): Int = math.round(deg * MICRODEG_TO_DEG_FACTOR).asInstanceOf[Int]
-
-  def microDegToDeg(microDeg: Int): Double = microDeg.asInstanceOf[Double] / MICRODEG_TO_DEG_FACTOR
-
 
   /**
    * Create a random point, uniformly distributed over the surface of the Earth.
@@ -69,6 +77,19 @@ private[scala] object Point {
     fromMicroDeg(degToMicroDeg(lat), degToMicroDeg(lon))
   }
 
+  /**
+   * Create a point from lat/lon in micro-degrees (i.e. degrees * 1,000,000).
+   *
+   * @param latMicroDeg Longitude in microdegrees.
+   * @param lonMicroDeg Latitude in microdegrees.
+   * @return A defined point.
+   */
+  def fromMicroDeg(latMicroDeg: Int, lonMicroDeg: Int): Point =
+    new Point(microDegToDeg(latMicroDeg), microDegToDeg(lonMicroDeg))
+
+  def microDegToDeg(microDeg: Int): Double = microDeg.asInstanceOf[Double] / MICRODEG_TO_DEG_FACTOR
+
+  def degToMicroDeg(deg: Double): Int = math.round(deg * MICRODEG_TO_DEG_FACTOR).asInstanceOf[Int]
 
   def degreesLatToMeters(latDegrees: Double): Double = latDegrees * METERS_PER_DEGREE_LAT
 
@@ -77,30 +98,6 @@ private[scala] object Point {
 
   def metersToDegreesLonAtLat(eastMeters: Double, lat: Double): Double =
     (eastMeters / METERS_PER_DEGREE_LON_EQUATOR) / math.cos(math.toRadians(lat))
-
-  /**
-   * Create an undefined points. No latitude or longitude can be obtained from it.
-   * Only within the mapcode implementation points can be undefined, so this methods is package private.
-   *
-   * @return Undefined points.
-   */
-  private[mapcode] lazy val undefined: Point = Point(Double.NaN, Double.NaN)
-
-  val LON_DEG_MIN: Double = -180.0
-  val LON_DEG_MAX: Double = 180.0
-  val LAT_DEG_MIN: Double = -90.0
-  val LAT_DEG_MAX: Double = 90.0
-  val LON_MICRODEG_MIN: Int = degToMicroDeg(LON_DEG_MIN)
-  val LON_MICRODEG_MAX: Int = degToMicroDeg(LON_DEG_MAX)
-  val LAT_MICRODEG_MIN: Int = degToMicroDeg(LAT_DEG_MIN)
-  val LAT_MICRODEG_MAX: Int = degToMicroDeg(LAT_DEG_MAX)
-  val MICRODEG_TO_DEG_FACTOR: Double = 1000000.0
-  val EARTH_RADIUS_X_METERS: Double = 6378137.0
-  val EARTH_RADIUS_Y_METERS: Double = 6356752.3
-  val EARTH_CIRCUMFERENCE_X: Double = EARTH_RADIUS_X_METERS * 2.0 * math.Pi
-  val EARTH_CIRCUMFERENCE_Y: Double = EARTH_RADIUS_Y_METERS * 2.0 * math.Pi
-  val METERS_PER_DEGREE_LAT: Double = EARTH_CIRCUMFERENCE_Y / 360.0
-  val METERS_PER_DEGREE_LON_EQUATOR: Double = EARTH_CIRCUMFERENCE_X / 360.0
 }
 
 case class Point(latDeg: Double, lonDeg: Double) {
@@ -117,6 +114,13 @@ case class Point(latDeg: Double, lonDeg: Double) {
    */
   def lonMicroDeg: Int = degToMicroDeg(lonDeg)
 
+  def normalize: Point = {
+    if (isDefined) {
+      def clamp(min: Double, max: Double, value: Double) = math.max(math.min(max, value), min)
+      Point(clamp(LAT_DEG_MIN, LAT_DEG_MAX, latDeg), clamp(LON_DEG_MIN, LON_DEG_MAX, lonDeg))
+    } else this
+  }
+
   /**
    * Return whether the point is defined or not.
    * Only within the mapcode implementation points can be undefined, so this methods is package private.
@@ -124,13 +128,6 @@ case class Point(latDeg: Double, lonDeg: Double) {
    * @return True if defined. If false, no lat/lon is available.
    */
   private[mapcode] def isDefined: Boolean = this != undefined
-
-  def normalize: Point = {
-    if (isDefined) {
-      def clamp(min: Double, max: Double, value: Double) = math.max(math.min(max, value), min)
-      Point(clamp(LAT_DEG_MIN, LAT_DEG_MAX, latDeg), clamp(LON_DEG_MIN, LON_DEG_MAX, lonDeg))
-    } else this
-  }
 
   /** Distance between two points on the unit sphere. */
   def unitDistanceBetween(p: Point): Double = {
@@ -140,8 +137,8 @@ case class Point(latDeg: Double, lonDeg: Double) {
     val Δφ = (p.latDeg - this.latDeg).toRadians
     val Δλ = (p.lonDeg - this.lonDeg).toRadians
 
-    val a = math.sin(Δφ/2) * math.sin(Δφ/2) + math.cos(φ1) * math.cos(φ2) * math.sin(Δλ/2) * math.sin(Δλ/2)
-    2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+    val a = math.sin(Δφ / 2) * math.sin(Δφ / 2) + math.cos(φ1) * math.cos(φ2) * math.sin(Δλ / 2) * math.sin(Δλ / 2)
+    2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
   }
 
   /**
