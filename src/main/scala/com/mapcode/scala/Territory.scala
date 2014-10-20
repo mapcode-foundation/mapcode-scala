@@ -39,7 +39,6 @@ trait TerritoryOperations extends Enumeration {
     territories.foldLeft(Map[String, Seq[Territory]]())(populateTerritory)
   }
 
-  // private implementation
   private[scala] lazy val parentTerritories: Set[Territory] = territories.flatMap(_.parentTerritory).toSet
 
   def fromTerritoryCode(territoryCode: Int): Option[Territory] = codeList.get(territoryCode)
