@@ -43,7 +43,7 @@ Then from there, you can leave sbt in a continuous “detect changes and compile
 
 To generate a coverage report, we use [scoverage](https://github.com/scoverage/sbt-scoverage). You can run this and view the coverage report like:
 
-	$ sbt clean coverage:test
+	$ sbt clean scoverage:test
 
 This will generate an HTML report in ``./target/scala-2.11/scoverage-report/index.html``.
 
