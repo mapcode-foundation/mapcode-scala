@@ -49,4 +49,29 @@ This will generate an HTML report in ``./target/scala-2.11/scoverage-report/inde
 
 You can learn more about mapcode at the [mapcode website](http://www.mapcode.com/). This implementation was based on the Java implementation at [https://github.com/mapcode-foundation/mapcode-java](https://github.com/mapcode-foundation/mapcode-java).
 
+# Using Git and `.gitignore`
+
+It's good practice to set up a personal global .gitignore file on your machine which filters a number of files
+on your file systems that you do not wish to submit to the Git repository. You can set up your own global
+`~/.gitignore` file by executing:
+`git config --global core.excludesfile ~/.gitignore`
+
+In general, add the following file types to `~/.gitignore` (each entry should be on a separate line):
+`*.com *.class *.dll *.exe *.o *.so *.log *.sql *.sqlite *.tlog *.epoch *.swp *.hprof *.hprof.index *.releaseBackup *~`
+
+If you're using a Mac, filter:
+`.DS_Store* Thumbs.db`
+
+If you're using IntelliJ IDEA, filter:
+`*.iml *.iws .idea/`
+
+If you're using Eclips, filter:
+`.classpath .project .settings .cache`
+
+If you're using NetBeans, filter: 
+`nb-configuration.xml *.orig`
+
+The local `.gitignore` file in the Git repository itself to reflect those file only that are produced by executing
+regular compile, build or release commands, such as:
+`target/ out/`
 
