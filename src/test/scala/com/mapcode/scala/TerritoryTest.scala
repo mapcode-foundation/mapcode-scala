@@ -22,7 +22,7 @@ class TerritoryTest extends FunSuite with Matchers {
   }
 
   test("fromString") {
-    Territory.fromString("America") should equal(Some(Territory.USA))
+    Territory.fromString("America") should be(None)
     an[IllegalArgumentException] should be thrownBy Territory.fromString("America", Some(Territory.US_MT))
     Territory.fromString("CA", Some(Territory.USA)) should equal(Some(Territory.US_CA))
     Territory.fromString("BR") should equal(Some(Territory.IN_BR))
@@ -42,25 +42,23 @@ class TerritoryTest extends FunSuite with Matchers {
   }
 
   test("various names") {
-    Territory.territories.foreach { territory =>
-      val oldNames = Territory.nameMap.filter(_._2.contains(territory)).map(_._1).toSet
-      val newNames = territory.allNames.toSet
-      newNames should be(oldNames)
-    }
+    import Territory._
+    import NameFormat._
 
-    Territory.territories.foreach { territory =>
-      territory.allNames.foreach { name =>
-        Territory.fromString(name, territory.parentTerritory) should equal(Some(territory))
+    territories.foreach { territory =>
+      territory.parentTerritory match {
+        case None =>
+          fromString(territory.toNameFormat(International)) should equal(Some(territory))
+          fromString(territory.toNameFormat(MinimalUnambiguous)) should equal(Some(territory))
+        case Some(parent) =>
+          fromString(territory.toNameFormat(Minimal), Some(parent)) should equal(Some(territory))
       }
     }
 
-    Territory.territories.foreach { territory =>
-      Territory.fromString(territory.toNameFormat(NameFormat.International)) should equal(Some(territory))
-      Territory.fromString(territory.toNameFormat(NameFormat.MinimalUnambiguous)) should equal(Some(territory))
-    }
+    fromString("no such top level location", None) should equal(None)
+    fromString("no such state", Some(USA)) should equal(None)
 
-    Territory.fromString("no such location", None) should equal(None)
-    Territory.fromString("no such location", Some(Territory.USA)) should equal(None)
+
   }
 
 
@@ -71,6 +69,16 @@ class TerritoryTest extends FunSuite with Matchers {
     }
 
     a[RuntimeException] should be thrownBy myTerritories.fromString("US")
+  }
+
+  test("short names hit states, long names hit countries") {
+    import Territory._
+    fromString("RU") should be(Some(RUS))
+    fromString("CN") should be(Some(CHN))
+    fromString("AU") should be(Some(AUS))
+    fromString("IN") should be(Some(US_IN))
+    fromString("BR") should be(Some(IN_BR))
+    fromString("AS") should be(Some(IN_AS))
   }
 }
 

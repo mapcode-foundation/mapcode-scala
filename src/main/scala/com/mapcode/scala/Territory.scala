@@ -58,7 +58,7 @@ trait TerritoryOperations extends Enumeration {
   def fromString(name: String, parentTerritory: Option[Territory] = None): Option[Territory] = {
     parentTerritory.foreach(pt => require(parentTerritories.contains(pt), s"$pt is not a valid parent territory"))
     (nameMap.get(name), parentTerritory) match {
-      case (Some(terrs), None) => terrs.headOption
+      case (Some(terrs), None) => terrs.find(_.name == name) orElse terrs.find(_.parentTerritory.isDefined) orElse terrs.headOption
       case (Some(terrs), parent@Some(_)) =>
         terrs.find(_.parentTerritory == parent)
       case _ =>
@@ -117,15 +117,16 @@ trait TerritoryOperations extends Enumeration {
         else Seq(name)
       }
       def generateAliasCombos(name: String): Seq[String] = {
-        val suffix: Option[String] = if (name.contains("-")) Some(name.dropWhile(_ != '-').tail) else None
+        // 3-letter codes are not that interesting, since they are more useful
+        // for locating countries instead of states. So we just focus on aliases
+        // that start with a 2-letter iso code. Which begs the question when are
+        // they useful, and whether; not sure this is right yet. todo
+        val suffix: Option[String] = if (name.indexOf("-") == 2) Some(name.dropWhile(_ != '-').tail) else None
         val parentVariant: Option[String] = for (sfx <- suffix; par <- parentTerritory.map(_.name)) yield s"$par-$sfx"
         Seq(name) ++ suffix ++ parentVariant
       }
 
-      (generateAliasCombos(name).flatMap(spaceDup) ++
-        Seq(fullName) ++
-        aliases.flatMap(generateAliasCombos).flatMap(spaceDup) ++
-        fullNameAliases).distinct
+      (generateAliasCombos(name) ++ aliases.flatMap(generateAliasCombos)).flatMap(spaceDup).distinct
     }
   }
 }
