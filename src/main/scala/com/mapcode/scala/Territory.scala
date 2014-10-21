@@ -43,6 +43,18 @@ trait TerritoryOperations extends Enumeration {
 
   def fromTerritoryCode(territoryCode: Int): Option[Territory] = codeList.get(territoryCode)
 
+    /**
+     * Get a territory from a mapcode territory abbreviation. Note that the provided abbreviation is NOT an
+     * ISO code: it's a mapcode prefix. As local mapcodes for states have been optimized to prefer to use 2-character
+     * state codes in local codes, states are preferred over countries in this case.
+     *
+     * For example, fromString("AS") returns IN_AS rather than ASM and fromString("BR") returns IN_BR rather than BRA.
+     *
+     * This behavior is intentional as local mapcodes are designed to be as short as possible. A mapcode within
+     * the Indian state Bihar should therefore be able to specified as "BR 49.46M3" rather "IN-BR 49.46M3".
+     *
+     * Brazilian mapcodes, on the other hand, would be specified as "BRA BDHP.JK39-1D", using the ISO 3 letter code.
+     */
   def fromString(name: String, parentTerritory: Option[Territory] = None): Option[Territory] = {
     parentTerritory.foreach(pt => require(parentTerritories.contains(pt), s"$pt is not a valid parent territory"))
     (nameMap.get(name), parentTerritory) match {
