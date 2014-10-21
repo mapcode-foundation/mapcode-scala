@@ -81,7 +81,8 @@ In order to get consistent code layout for Scala files, source files should be r
 settings below. These settings are describes as IntelliJ IDEA "Code Style" settings (and they can be copied directly 
 into your `.idea/codeStyleSetting.xml` file, if you use IDEA):
 
-```<?xml version="1.0" encoding="UTF-8"?>
+```
+<?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ProjectCodeStyleSettingsManager">
     <option name="PER_PROJECT_SETTINGS">
