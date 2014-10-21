@@ -25,7 +25,8 @@ class TerritoryTest extends FunSuite with Matchers {
     Territory.fromString("America") should equal(Some(Territory.USA))
     an[IllegalArgumentException] should be thrownBy Territory.fromString("America", Some(Territory.US_MT))
     Territory.fromString("CA", Some(Territory.USA)) should equal(Some(Territory.US_CA))
-
+    Territory.fromString("BR") should equal(Some(Territory.IN_BR))
+    Territory.fromString("AS") should equal(Some(Territory.IN_AS))
   }
 
   test("states") {
