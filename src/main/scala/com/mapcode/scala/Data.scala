@@ -73,7 +73,7 @@ private[scala] object Data {
       codexLen += 1
     }
     val starPipe = calcStarPipe(i)
-    val mapcoderRect = null // todo SubArea.getArea(i)
+    val mapcoderRect = SubArea.getArea(i)
 
     new Data(flags = flags, codex = codex, codexLo = codexLo, codexHi = codexHi, codexLen = codexLen,
       nameless = nameless, useless = useless, specialShape = specialShape, pipeType = pipeType, pipeLetter = pipeLetter,

@@ -22,14 +22,17 @@ package com.mapcode.scala
  *
  * This class contains a class for dealing with ranges of comparable items.
  */
-private[scala] case class Range[T <% Ordered[T]](min: T, max: T) {
 
-  def containsRange(range: Range[T]): Boolean = min <= range.min && max >= range.max
+private[scala] case class Range(min: Int, max: Int) {
 
-  def intersects(range: Range[T]): Boolean =
+  require(min <= max, s"Range min $min > max $max")
+
+  def containsRange(range: Range): Boolean = min <= range.min && max >= range.max
+
+  def intersects(range: Range): Boolean =
     range.contains(min) || range.contains(max) || contains(range.max) || contains(range.min)
 
-  def contains(value: T): Boolean = value >= min && value <= max
+  def contains(value: Int): Boolean = value >= min && value <= max
 
   /**
    * Used to constrain this range to a bunch of ranges. Note that constraint is not always possible;
@@ -37,10 +40,10 @@ private[scala] case class Range[T <% Ordered[T]](min: T, max: T) {
    *
    * @return versions of this range, constrained by each of the arguments, if possible.
    */
-  def constrainAll(constrainingRanges: Seq[Range[T]]): Seq[Range[T]] = constrainingRanges.flatMap(constrain)
+  def constrainAll(constrainingRanges: Seq[Range]): Seq[Range] = constrainingRanges.flatMap(constrain)
 
   /** @return a new version of this range, constrained by the argument, if possible */
-  def constrain(constrainingRange: Range[T]): Option[Range[T]] = {
+  def constrain(constrainingRange: Range): Option[Range] = {
     val newMin = if (min < constrainingRange.min) constrainingRange.min else min
     val newMax = if (max > constrainingRange.max) constrainingRange.max else max
     if (newMax <= newMin) None

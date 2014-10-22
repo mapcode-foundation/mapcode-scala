@@ -34,13 +34,13 @@ private[scala] object Point {
   val LON_DEG_MAX: Double = 180.0
   val LAT_DEG_MIN: Double = -90.0
   val LAT_DEG_MAX: Double = 90.0
+  val MICRODEG_TO_DEG_FACTOR: Double = 1000000.0
+  val EARTH_RADIUS_X_METERS: Double = 6378137.0
+  val EARTH_RADIUS_Y_METERS: Double = 6356752.3
   val LON_MICRODEG_MIN: Int = degToMicroDeg(LON_DEG_MIN)
   val LON_MICRODEG_MAX: Int = degToMicroDeg(LON_DEG_MAX)
   val LAT_MICRODEG_MIN: Int = degToMicroDeg(LAT_DEG_MIN)
   val LAT_MICRODEG_MAX: Int = degToMicroDeg(LAT_DEG_MAX)
-  val MICRODEG_TO_DEG_FACTOR: Double = 1000000.0
-  val EARTH_RADIUS_X_METERS: Double = 6378137.0
-  val EARTH_RADIUS_Y_METERS: Double = 6356752.3
   val EARTH_CIRCUMFERENCE_X: Double = EARTH_RADIUS_X_METERS * 2.0 * math.Pi
   val EARTH_CIRCUMFERENCE_Y: Double = EARTH_RADIUS_Y_METERS * 2.0 * math.Pi
   val METERS_PER_DEGREE_LAT: Double = EARTH_CIRCUMFERENCE_Y / 360.0
