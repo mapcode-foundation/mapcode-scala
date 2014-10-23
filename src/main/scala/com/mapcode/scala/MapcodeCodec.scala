@@ -15,7 +15,7 @@
  */
 package com.mapcode.scala
 
-import CheckArgs.checkRange
+import CheckArgs.{checkRange, checkNonnull}
 
 /**
  * ----------------------------------------------------------------------------------------------
@@ -45,7 +45,6 @@ object MapcodeCodec {
     checkRange("latDeg", latDeg, Point.LAT_DEG_MIN, Point.LAT_DEG_MAX)
     checkRange("lonDeg", lonDeg, Point.LON_DEG_MIN, Point.LON_DEG_MAX)
     val results: Seq[Mapcode] = Encoder.encode(latDeg, lonDeg, None, isRecursive = false, limitToOneResult = false, allowWorld = true)
-    assert(results != null)
     assert(results.size >= 1)
     results
   }
@@ -70,6 +69,7 @@ object MapcodeCodec {
   def encode(latDeg: Double, lonDeg: Double, restrictToTerritory: Territory.Territory): Seq[Mapcode] = {
     checkRange("latDeg", latDeg, Point.LAT_DEG_MIN, Point.LAT_DEG_MAX)
     checkRange("lonDeg", lonDeg, Point.LON_DEG_MIN, Point.LON_DEG_MAX)
+    checkNonnull("restrictToTerritory", restrictToTerritory)
     Encoder.encode(latDeg, lonDeg, Some(restrictToTerritory), isRecursive = false, limitToOneResult = false, allowWorld = false)
   }
 
@@ -85,7 +85,7 @@ object MapcodeCodec {
   def encodeToShortest(latDeg: Double, lonDeg: Double): Mapcode = {
     checkRange("latDeg", latDeg, Point.LAT_DEG_MIN, Point.LAT_DEG_MAX)
     checkRange("lonDeg", lonDeg, Point.LON_DEG_MIN, Point.LON_DEG_MAX)
-    val results  = Encoder.encode(latDeg, lonDeg, null, isRecursive = false, limitToOneResult = true, allowWorld = true)
+    val results  = Encoder.encode(latDeg, lonDeg, None, isRecursive = false, limitToOneResult = true, allowWorld = true)
     assert(results.size == 1)
     results.head
   }
