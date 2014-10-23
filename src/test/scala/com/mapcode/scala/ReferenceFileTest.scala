@@ -15,8 +15,6 @@
  */
 package com.mapcode.scala
 
-import java.io.{BufferedReader, EOFException, InputStream, InputStreamReader}
-
 import org.scalatest.{FunSuite, Matchers}
 
 import scala.collection.mutable.ArrayBuffer
@@ -40,8 +38,10 @@ object ReferenceFileTest extends Matchers {
   val LOG_LINE_EVERY: Int = 25000
   val METERS_DELTA: Double = 10.0
 
-  private def getNextReferenceRecord(chunkedFile: ChunkedFile): ReferenceFileTest.ReferenceRec = {
-    val firstLine: String = chunkedFile.readNonEmptyLine()
+  private def mkSuffixStream: Stream[Char] = Stream.tabulate(10)(x => ('a' + x).toChar)
+
+  private def getNextReferenceRecord(chunkedFile: Iterator[String]): ReferenceFileTest.ReferenceRec = {
+    val firstLine: String = chunkedFile.next()
     val args: Array[String] = firstLine.split(" ")
     assert((args.length == 3) || (args.length == 6),
       "Expecting 3 or 6 elements, not " + args.length + " in line: " + firstLine)
@@ -53,82 +53,47 @@ object ReferenceFileTest extends Matchers {
     assert((-180 <= point.lonDeg) && (point.lonDeg <= 180), "Longitude must be in [-180, 180]")
     val mapcodeRecs = ArrayBuffer[ReferenceFileTest.MapcodeRec]()
 
-    {
-      var i: Int = 0
-      while (i < count) {
-        {
-          val line: String = chunkedFile.readNonEmptyLine()
-          assert(!line.isEmpty, "Line should not be empty")
-          val mapcodeLine: Array[String] = line.split(" ")
-          mapcodeLine.length should be(2)
-          val territory = Territory.fromString(mapcodeLine(0))
-          val mapcode: String = mapcodeLine(1)
-          val mapcodeRec: ReferenceFileTest.MapcodeRec = new ReferenceFileTest.MapcodeRec(mapcode, territory)
-          mapcodeRecs += mapcodeRec
-        }
-        i += 1
-      }
+    for (i <- 0 until count) {
+      val line: String = chunkedFile.next()
+      assert(!line.isEmpty, "Line should not be empty")
+      val mapcodeLine: Array[String] = line.split(" ")
+      mapcodeLine.length should be(2)
+      val territory = Territory.fromString(mapcodeLine(0))
+      val mapcode: String = mapcodeLine(1)
+      val mapcodeRec: ReferenceFileTest.MapcodeRec = new ReferenceFileTest.MapcodeRec(mapcode, territory)
+      mapcodeRecs += mapcodeRec
     }
     mapcodeRecs.size should be(count)
     ReferenceRec(point, mapcodeRecs)
   }
 
-  /**
-   * Utility class to read chunked files. Chunked files have extension appended to them
-   * like '.a', '.b', etc. This class provides reading lines from such files and moving
-   * to next chunks when needed.
-   */
-  class ChunkedFile(val baseFileName: String) {
-    var fileExt: Char = 'a'
-    def fileName = baseFileName + '.' + fileExt
-    var inputStream: InputStream = getClass.getResourceAsStream(fileName)
-    var bufferedReader = new BufferedReader(new InputStreamReader(inputStream))
+  case class ChunkIterator(name: String) extends Iterator[String] {
 
-    def readNonEmptyLine(): String = {
-      var line: String = null
-      do {
-        var tryNextChunk: Boolean = false
-        try {
-          line = bufferedReader.readLine
-          tryNextChunk = !bufferedReader.ready || (line == null)
-        }
-        catch {
-          case ignored: EOFException => tryNextChunk = true
-        }
-        if (line == null) {
-          line = ""
-        }
-        if (tryNextChunk) {
-          nextChunk()
-        }
-      } while (line.isEmpty)
-      line
+    val (sources, iterator) = {
+      val suffixes = mkSuffixStream
+      val names = suffixes.map(sfx => name + "." + sfx)
+      val streams = names.map(name => getClass.getResourceAsStream(name)).takeWhile(_ != null)
+      val sources = streams.map(io.Source.fromInputStream)
+      val iterator = sources.flatMap(source => source.getLines()).filterNot(_.isEmpty).toIterator
+      (sources, iterator)
     }
 
-    def nextChunk() {
-      close()
-      fileExt = (fileExt.toInt + 1).toChar
-      inputStream = getClass.getResourceAsStream(fileName)
-      if (inputStream != null) {
-        bufferedReader = new BufferedReader(new InputStreamReader(inputStream))
-      }
-      else {
-        throw new EOFException
-      }
+    override def next(): String = {
+      iterator.next()
     }
 
-    def close() {
-      Try(bufferedReader.close())
-      Try(inputStream.close())
-      bufferedReader = null
-      inputStream = null
+    override def hasNext: Boolean = {
+      val hasNext = iterator.hasNext
+      if (!hasNext) {
+        Try(sources.foreach(_.close()))
+      }
+      hasNext
     }
   }
 
   case class ReferenceRec(point: Point, mapcodes: Seq[MapcodeRec])
 
   case class MapcodeRec(mapcode: String, territory: Option[Territory.Territory])
-
 
 }
 
@@ -171,98 +136,90 @@ class ReferenceFileTest extends FunSuite with Matchers {
   private def checkFile(baseFileName: String) {
     var error: Int = 0
     var maxdelta: Double = 0
-    val chunkedFile: ChunkedFile = new ChunkedFile(baseFileName)
-    try {
-      var i: Int = 1
-      while (true) {
-        val reference: ReferenceFileTest.ReferenceRec = getNextReferenceRecord(chunkedFile)
-        val showLogLine: Boolean = (i % LOG_LINE_EVERY) == 0
-        if (showLogLine) {
-          println(s"checkFile: #$i, file=${chunkedFile.fileName}")
-          println(s"checkFile: lat/lon  = ${reference.point}", reference.point)
-          println(s"checkFile: expected = ${reference.mapcodes}")
-        }
-        val results = MapcodeCodec.encode(reference.point.latDeg, reference.point.lonDeg)
-        if (showLogLine) {
-          println(s"checkFile: actual   = $results")
-        }
-        for (result <- results) {
-          var found: Boolean = false
-          if (!found) {
-            for (referenceMapcodeRec <- reference.mapcodes) {
-              if (referenceMapcodeRec.territory == Some(result.territory)) {
-                if (referenceMapcodeRec.mapcode.lastIndexOf('-') > 4) {
-                  if (referenceMapcodeRec.mapcode == result.mapcodePrecision2) {
-                    found = true
-                  }
-                }
-                else {
-                  if (referenceMapcodeRec.mapcode == result.mapcode) {
-                    found = true
-                  }
-                }
-              }
-            }
-          }
-          if (!found) {
-            println("checkFile: Mapcode '$result' at ${reference.point} is not in the reference file!")
-            error += 1
-          }
-        }
-        for (referenceMapcodeRec <- reference.mapcodes) {
-          var found: Boolean = false
-          for (result <- results) {
-            if (!found) {
-              if (referenceMapcodeRec.territory == Some(result.territory)) {
-                if (referenceMapcodeRec.mapcode.lastIndexOf('-') > 4) {
-                  if (referenceMapcodeRec.mapcode == result.mapcodePrecision2) {
-                    found = true
-                  }
-                }
-                else {
-                  if (referenceMapcodeRec.mapcode == result.mapcode) {
-                    found = true
-                  }
-                }
-              }
-            }
-          }
-          if (!found) {
-            println(s"checkFile: Mapcode '${referenceMapcodeRec.territory} ${referenceMapcodeRec.mapcode}' " +
-              s"at ${reference.point} is not produced by the decoder!")
-            error += 1
-          }
-        }
-        for (mapcodeRec <- reference.mapcodes) {
-          try {
-            val result = MapcodeCodec.decode(mapcodeRec.mapcode, mapcodeRec.territory.get)
-            val distanceMeters: Double = reference.point.distanceInMeters(result)
-            maxdelta = Math.max(maxdelta, distanceMeters)
-            if (distanceMeters > METERS_DELTA) {
-              println(s"Mapcode ${mapcodeRec.territory} ${mapcodeRec.mapcode} was generated " +
-                s"for point ${reference.point}, but decodes to point $result which is $distanceMeters " +
-                s"meters from the original point.")
-              error += 1
-            }
-          }
-          catch {
-            case unknownMapcodeException: UnknownMapcodeException =>
-              println(s"Mapcode ${mapcodeRec.territory} ${mapcodeRec.mapcode} was generated for " +
-                s"point ${reference.point}, but cannot be decoded.")
-              error += 1
-          }
-        }
-        if (showLogLine) {
-          println()
-        }
-        i += 1
+    val chunkedFile = ChunkIterator(baseFileName)
+    var i: Int = 1
+    while (chunkedFile.hasNext) {
+      val reference: ReferenceFileTest.ReferenceRec = getNextReferenceRecord(chunkedFile)
+      val showLogLine: Boolean = (i % LOG_LINE_EVERY) == 0
+      if (showLogLine) {
+        println(s"checkFile: #$i, file=${chunkedFile.name}")
+        println(s"checkFile: lat/lon  = ${reference.point}", reference.point)
+        println(s"checkFile: expected = ${reference.mapcodes}")
       }
-    }
-    catch {
-      case e: EOFException => // ok
-    }
-    finally {
-      chunkedFile.close()
+      val results = MapcodeCodec.encode(reference.point.latDeg, reference.point.lonDeg)
+      if (showLogLine) {
+        println(s"checkFile: actual   = $results")
+      }
+      for (result <- results) {
+        var found: Boolean = false
+        if (!found) {
+          for (referenceMapcodeRec <- reference.mapcodes) {
+            if (referenceMapcodeRec.territory == Some(result.territory)) {
+              if (referenceMapcodeRec.mapcode.lastIndexOf('-') > 4) {
+                if (referenceMapcodeRec.mapcode == result.mapcodePrecision2) {
+                  found = true
+                }
+              }
+              else {
+                if (referenceMapcodeRec.mapcode == result.mapcode) {
+                  found = true
+                }
+              }
+            }
+          }
+        }
+        if (!found) {
+          println("checkFile: Mapcode '$result' at ${reference.point} is not in the reference file!")
+          error += 1
+        }
+      }
+      for (referenceMapcodeRec <- reference.mapcodes) {
+        var found: Boolean = false
+        for (result <- results) {
+          if (!found) {
+            if (referenceMapcodeRec.territory == Some(result.territory)) {
+              if (referenceMapcodeRec.mapcode.lastIndexOf('-') > 4) {
+                if (referenceMapcodeRec.mapcode == result.mapcodePrecision2) {
+                  found = true
+                }
+              }
+              else {
+                if (referenceMapcodeRec.mapcode == result.mapcode) {
+                  found = true
+                }
+              }
+            }
+          }
+        }
+        if (!found) {
+          println(s"checkFile: Mapcode '${referenceMapcodeRec.territory} ${referenceMapcodeRec.mapcode}' " +
+            s"at ${reference.point} is not produced by the decoder!")
+          error += 1
+        }
+      }
+      for (mapcodeRec <- reference.mapcodes) {
+        try {
+          val result = MapcodeCodec.decode(mapcodeRec.mapcode, mapcodeRec.territory.get)
+          val distanceMeters: Double = reference.point.distanceInMeters(result)
+          maxdelta = Math.max(maxdelta, distanceMeters)
+          if (distanceMeters > METERS_DELTA) {
+            println(s"Mapcode ${mapcodeRec.territory} ${mapcodeRec.mapcode} was generated " +
+              s"for point ${reference.point}, but decodes to point $result which is $distanceMeters " +
+              s"meters from the original point.")
+            error += 1
+          }
+        }
+        catch {
+          case unknownMapcodeException: UnknownMapcodeException =>
+            println(s"Mapcode ${mapcodeRec.territory} ${mapcodeRec.mapcode} was generated for " +
+              s"point ${reference.point}, but cannot be decoded.")
+            error += 1
+        }
+      }
+      if (showLogLine) {
+        println()
+      }
+      i += 1
     }
     println(s"checkFile: Maximum delta for this testset = $maxdelta")
     error should be(0)
