@@ -49,32 +49,32 @@ class MapcodeCodecTest extends FunSuite with Matchers {
 
   test("highPrecisionUnicodeAthensAcropolis2") {
     val point: Point = MapcodeCodec.decode("GRC \u0397\u03a0.\u03982-\u03a62")
-    (point.latMicroDeg, point.lonMicroDeg) should be((37971844,23726223))
+    (point.latMicroDeg, point.lonMicroDeg) should be((37971844, 23726223))
   }
 
   test("unicodeMapcodeAthensAcropolis1") {
     val point: Point = MapcodeCodec.decode("\u0397\u03a0.\u03982", Territory.GRC)
-    (point.latMicroDeg, point.lonMicroDeg) should be(( 37971812, 23726247))
+    (point.latMicroDeg, point.lonMicroDeg) should be((37971812, 23726247))
   }
 
   test("unicodeMapcodeAthensAcropolis2") {
     val point: Point = MapcodeCodec.decode("GRC \u0397\u03a0.\u03982")
-    (point.latMicroDeg, point.lonMicroDeg) should be(( 37971812, 23726247))
+    (point.latMicroDeg, point.lonMicroDeg) should be((37971812, 23726247))
   }
 
   test("unicodeMapcodeTokyoTower1") {
     val point: Point = MapcodeCodec.decode("\u30c1\u30ca.8\u30c1", Territory.JPN)
-    (point.latMicroDeg, point.lonMicroDeg) should be(( 35658660, 139745394))
+    (point.latMicroDeg, point.lonMicroDeg) should be((35658660, 139745394))
   }
 
   test("unicodeMapcodeTokyoTower2") {
     val point: Point = MapcodeCodec.decode("JPN \u30c1\u30ca.8\u30c1")
-    (point.latMicroDeg, point.lonMicroDeg) should be(( 35658660, 139745394))
+    (point.latMicroDeg, point.lonMicroDeg) should be((35658660, 139745394))
   }
 
   test("mapCodeWithZeroGroitzsch") {
     val point: Point = MapcodeCodec.decode("HMVM.3Q0", Territory.DEU)
-    (point.latMicroDeg, point.lonMicroDeg) should be(( 51154852, 12278574))
+    (point.latMicroDeg, point.lonMicroDeg) should be((51154852, 12278574))
   }
 
   test("invalidTerritory") {

@@ -42,8 +42,8 @@ class TerritoryTest extends FunSuite with Matchers {
   }
 
   test("various names") {
-    import Territory._
-    import NameFormat._
+    import com.mapcode.scala.NameFormat._
+    import com.mapcode.scala.Territory._
 
     territories.foreach { territory =>
       territory.parentTerritory match {
@@ -57,8 +57,6 @@ class TerritoryTest extends FunSuite with Matchers {
 
     fromString("no such top level location", None) should equal(None)
     fromString("no such state", Some(USA)) should equal(None)
-
-
   }
 
 
@@ -72,7 +70,7 @@ class TerritoryTest extends FunSuite with Matchers {
   }
 
   test("short names hit states, long names hit countries") {
-    import Territory._
+    import com.mapcode.scala.Territory._
     fromString("RU") should be(Some(RUS))
     fromString("CN") should be(Some(CHN))
     fromString("AU") should be(Some(AUS))

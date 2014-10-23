@@ -15,7 +15,7 @@
  */
 package com.mapcode.scala
 
-import CheckArgs.{checkRange, checkNonnull}
+import com.mapcode.scala.CheckArgs.{checkNonnull, checkRange}
 
 /**
  * ----------------------------------------------------------------------------------------------
@@ -50,30 +50,6 @@ object MapcodeCodec {
   }
 
   /**
-   * Encode a lat/lon pair to a mapcode with territory information, for a specific territory. This produces a
-   * potentially empty list of mapcodes (empty if the lat/lon does not fall within the territory for mapcodes).
-   *
-   * The returned result list will always contain at least 1 mapcode, because every lat/lon pair can be encoded.
-   *
-   * The list is ordered in such a way that the first result contains the shortest mapcode (which is usually a
-   * local mapcode).
-   *
-   * @param latDeg              Latitude, accepted range: -90..90.
-   * @param lonDeg              Longitude, accepted range: -180..180.
-   * @param restrictToTerritory Try to encode only within this territory, see { @link com.mapcode.Territory}. Cannot
-   *                                                                                  be null.
-   * @return List of mapcode information records, see { @link Mapcode}. This list is empty if no
-   *                                                          Mapcode can be generated for this territory matching the lat/lon.
-   * @throws IllegalArgumentException Thrown if latitude or longitude are out of range.
-   */
-  def encode(latDeg: Double, lonDeg: Double, restrictToTerritory: Territory.Territory): Seq[Mapcode] = {
-    checkRange("latDeg", latDeg, Point.LAT_DEG_MIN, Point.LAT_DEG_MAX)
-    checkRange("lonDeg", lonDeg, Point.LON_DEG_MIN, Point.LON_DEG_MAX)
-    checkNonnull("restrictToTerritory", restrictToTerritory)
-    Encoder.encode(latDeg, lonDeg, Some(restrictToTerritory), isRecursive = false, limitToOneResult = false, allowWorld = false)
-  }
-
-  /**
    * Encode a lat/lon pair to its shortest mapcode without territory information. For a valid lat/lon pair, this will
    * always yield a mapcode.
    *
@@ -85,7 +61,7 @@ object MapcodeCodec {
   def encodeToShortest(latDeg: Double, lonDeg: Double): Mapcode = {
     checkRange("latDeg", latDeg, Point.LAT_DEG_MIN, Point.LAT_DEG_MAX)
     checkRange("lonDeg", lonDeg, Point.LON_DEG_MIN, Point.LON_DEG_MAX)
-    val results  = Encoder.encode(latDeg, lonDeg, None, isRecursive = false, limitToOneResult = true, allowWorld = true)
+    val results = Encoder.encode(latDeg, lonDeg, None, isRecursive = false, limitToOneResult = true, allowWorld = true)
     assert(results.size == 1)
     results.head
   }
@@ -96,7 +72,7 @@ object MapcodeCodec {
    * @param latDeg              Latitude, accepted range: -90..90.
    * @param lonDeg              Longitude, accepted range: -180..180.
    * @param restrictToTerritory Try to encode only within this territory, see { @link com.mapcode.Territory}. Cannot
-   *                                                                                  be null.
+   *                            be null.
    * @return Shortest mapcode, see { @link Mapcode}.
    * @throws IllegalArgumentException Thrown if latitude or longitude are out of range.
    * @throws UnknownMapcodeException  Thrown if no mapcode was found for the lat/lon matching the territory.
@@ -104,7 +80,7 @@ object MapcodeCodec {
   def encodeToShortest(latDeg: Double, lonDeg: Double, restrictToTerritory: Territory.Territory): Mapcode = {
     checkRange("latDeg", latDeg, Point.LAT_DEG_MIN, Point.LAT_DEG_MAX)
     checkRange("lonDeg", lonDeg, Point.LON_DEG_MIN, Point.LON_DEG_MAX)
-    val results  = Encoder.encode(latDeg, lonDeg, Some(restrictToTerritory), isRecursive = false, limitToOneResult = true, allowWorld = false)
+    val results = Encoder.encode(latDeg, lonDeg, Some(restrictToTerritory), isRecursive = false, limitToOneResult = true, allowWorld = false)
     if (results.isEmpty) {
       throw new UnknownMapcodeException("No Mapcode for lat=" + latDeg + ", lon=" + lonDeg + ", territory=" + restrictToTerritory)
     }
@@ -123,9 +99,33 @@ object MapcodeCodec {
   def encodeToInternational(latDeg: Double, lonDeg: Double): Mapcode = {
     checkRange("latDeg", latDeg, Point.LAT_DEG_MIN, Point.LAT_DEG_MAX)
     checkRange("lonDeg", lonDeg, Point.LON_DEG_MIN, Point.LON_DEG_MAX)
-    val results  = encode(latDeg, lonDeg, Territory.AAA)
+    val results = encode(latDeg, lonDeg, Territory.AAA)
     assert(results.size >= 1)
     results.last
+  }
+
+  /**
+   * Encode a lat/lon pair to a mapcode with territory information, for a specific territory. This produces a
+   * potentially empty list of mapcodes (empty if the lat/lon does not fall within the territory for mapcodes).
+   *
+   * The returned result list will always contain at least 1 mapcode, because every lat/lon pair can be encoded.
+   *
+   * The list is ordered in such a way that the first result contains the shortest mapcode (which is usually a
+   * local mapcode).
+   *
+   * @param latDeg              Latitude, accepted range: -90..90.
+   * @param lonDeg              Longitude, accepted range: -180..180.
+   * @param restrictToTerritory Try to encode only within this territory, see { @link com.mapcode.Territory}. Cannot
+   *                            be null.
+   * @return List of mapcode information records, see { @link Mapcode}. This list is empty if no
+   *         Mapcode can be generated for this territory matching the lat/lon.
+   * @throws IllegalArgumentException Thrown if latitude or longitude are out of range.
+   */
+  def encode(latDeg: Double, lonDeg: Double, restrictToTerritory: Territory.Territory): Seq[Mapcode] = {
+    checkRange("latDeg", latDeg, Point.LAT_DEG_MIN, Point.LAT_DEG_MAX)
+    checkRange("lonDeg", lonDeg, Point.LON_DEG_MIN, Point.LON_DEG_MAX)
+    checkNonnull("restrictToTerritory", restrictToTerritory)
+    Encoder.encode(latDeg, lonDeg, Some(restrictToTerritory), isRecursive = false, limitToOneResult = false, allowWorld = false)
   }
 
   /**

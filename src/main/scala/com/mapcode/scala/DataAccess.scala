@@ -75,17 +75,17 @@ private[scala] object DataAccess {
     asUnsignedByte(i) + (asUnsignedByte(i + 1) << 8) + (asUnsignedByte(i + 2) << 16) + (asUnsignedByte(i + 3) << 24)
   }
 
-  def smartDiv(i: Int): Int = {
-    require(i >= 0 && i < DataAccess.FILE_DATA.length / 20,
-      s"smartDiv argument $i is out of range [0, ${DataAccess.FILE_DATA.length / 20}})")
-    asUnsignedByte((i * 20) + 18) + (asUnsignedByte((i * 20) + 19) * 256)
-  }
-
   def asUnsignedByte(i: Int): Int = {
     require(i >= 0 && i < FILE_DATA.length, s"asUnsignedByte arg $i is out of range: [0, ${FILE_DATA.length})")
     val u = FILE_DATA(i)
     if (u < 0) u + 256
     else u
+  }
+
+  def smartDiv(i: Int): Int = {
+    require(i >= 0 && i < DataAccess.FILE_DATA.length / 20,
+      s"smartDiv argument $i is out of range [0, ${DataAccess.FILE_DATA.length / 20}})")
+    asUnsignedByte((i * 20) + 18) + (asUnsignedByte((i * 20) + 19) * 256)
   }
 
   def dataFirstRecord(ccode: Int): Int = {

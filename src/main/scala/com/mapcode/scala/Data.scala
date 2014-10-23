@@ -53,6 +53,8 @@ private[scala] object Data {
     calcCodexLen(calcCodexHi(flags), calcCodexLo(flags))
   }
 
+  def calcCodexLen(codexhi: Int, codexlo: Int): Int = codexhi + codexlo
+
   def apply(i: Int): Data = {
     val flags = DataAccess.dataFlags(i)
     val codexHi = calcCodexHi(flags)
@@ -85,8 +87,6 @@ private[scala] object Data {
   def isSpecialShape(i: Int): Boolean = (DataAccess.dataFlags(i) & 1024) != 0
 
   def calcStarPipe(i: Int): Boolean = (DataAccess.dataFlags(i) & (8 << 5)) != 0
-
-  def calcCodexLen(codexhi: Int, codexlo: Int): Int = codexhi + codexlo
 }
 
 

@@ -1,7 +1,7 @@
 package com.mapcode.scala
 
-import org.scalatest.prop.{Configuration, GeneratorDrivenPropertyChecks}
-import org.scalatest.{Matchers, FunSuite}
+import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import org.scalatest.{FunSuite, Matchers}
 
 class RangeTest extends FunSuite with Matchers with GeneratorDrivenPropertyChecks {
 

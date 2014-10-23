@@ -53,7 +53,7 @@ object EncodeDecodeTest extends Matchers {
             val decoded = MapcodeCodec.decode(result.mapcode, territory)
             val distance = encode.distanceInMeters(decoded)
             distance should be < MaxErrorMeters
-            log(f"""#$i/$SampleSize $encode/$territory) -> ${result.mapcode} -> $decoded ($distance%1.2f m)""")
+            log( f"""#$i/$SampleSize $encode/$territory) -> ${result.mapcode} -> $decoded ($distance%1.2f m)""")
           }
         }
         found should be(right = true)

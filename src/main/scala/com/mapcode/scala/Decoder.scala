@@ -331,13 +331,14 @@ object Decoder {
         dx = v / side
       }
       if (dx >= xSIDE) {
-        return Point.undefined
+        Point.undefined
+      } else {
+        val dividerx4: Int = Common.xDivider(miny, maxy)
+        val dividery: Int = 90
+        val cornerx: Int = minx + (dx * dividerx4) / 4
+        val cornery: Int = maxy - dy * dividery
+        add2res(cornery, cornerx, dividerx4, dividery, -1, extrapostfix)
       }
-      val dividerx4: Int = Common.xDivider(miny, maxy)
-      val dividery: Int = 90
-      val cornerx: Int = minx + (dx * dividerx4) / 4
-      val cornery: Int = maxy - dy * dividery
-      add2res(cornery, cornerx, dividerx4, dividery, -1, extrapostfix)
     }
   }
 
@@ -507,10 +508,8 @@ object Decoder {
   private def decodeTriple(str: String): Point = {
     val c1: Byte = decode_chars(str.charAt(0).asInstanceOf[Int]).asInstanceOf[Byte]
     val x: Int = fastDecode(str.substring(1))
-    if (c1 < 24) {
-      return Point.fromMicroDeg(c1 / 6 * 34 + x % 34, (c1 % 6) * 28 + x / 34)
-    }
-    Point.fromMicroDeg(x % 40 + 136, x / 40 + 24 * (c1 - 24))
+    if (c1 < 24) Point.fromMicroDeg(c1 / 6 * 34 + x % 34, (c1 % 6) * 28 + x / 34)
+    else Point.fromMicroDeg(x % 40 + 136, x / 40 + 24 * (c1 - 24))
   }
 
   private def decode6(v: Int, width: Int, height: Int): Point = {

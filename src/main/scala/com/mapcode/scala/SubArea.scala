@@ -84,6 +84,7 @@ private[scala] object SubArea {
         buf
       } else existing
     }
+
     def containsKey(key: Int) = super.get(key) != null
   }
 
