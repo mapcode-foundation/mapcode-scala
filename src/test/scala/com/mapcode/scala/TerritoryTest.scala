@@ -80,5 +80,35 @@ class TerritoryTest extends FunSuite with Matchers {
     fromString("BR") should be(Some(IN_BR))
     fromString("AS") should be(Some(IN_AS))
   }
+
+  test("emptyCodeTest") {
+    Territory.fromString("") should be(None)
+  }
+
+  test("disambiguateMNTest1") {
+    val Some(territory1) = Territory.fromString("IND-MN");
+    val Some(territory2) = Territory.fromString("MN", Some(ParentTerritory.IND))
+    val Some(territory3) = Territory.fromString("MN", Some(ParentTerritory.USA))
+    territory1 should be(territory2)
+    territory2 should not be territory3
+  }
+
+  test("disambiguateMNTest2") {
+    Territory.fromString("MN", Some(ParentTerritory.RUS)) should be(None)
+  }
+
+  test("territoryFromStringTest") {
+    Territory.fromString("NLD") should be(Some(Territory.NLD))
+    Territory.fromString("ARG") should be(Some(Territory.ARG))
+    Territory.fromString("ARG") should be(Some(Territory.ARG))
+    Territory.fromString("US-AS") should be(Some(Territory.ASM))
+    Territory.fromString("USA-AS") should be(Some(Territory.ASM))
+    Territory.fromString("RU") should be(Some(Territory.RUS))
+    Territory.fromString("AU") should be(Some(Territory.AUS))
+    Territory.fromString("IN") should be(Some(Territory.US_IN))
+    Territory.fromString("BR") should be(Some(Territory.IN_BR))
+    Territory.fromString("AS") should be(Some(Territory.IN_AS))
+  }
+
 }
 
