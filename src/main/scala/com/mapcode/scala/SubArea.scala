@@ -149,12 +149,45 @@ private[scala] object SubArea {
       case range => range ++ findRange(lonMap, point.lonMicroDeg)
     }
 
-    val result = if (allAreas.nonEmpty) {
+    if (allAreas.nonEmpty) {
+      // this is quite performance critical, so I've hand-optimized
+      // this to be as fast as I can make it. Sadly all this had to be
+      // added to make up for a much more slow:
+      //  subArea <- allAreas(0) if allAreas.tail.forall(_.contains(subArea))
+      // On the other hand, I thought maybe making Data immutable was the core
+      // issue, so if there is one hand-tuned piece of code to bring this
+      // within a few tens of percent of the java version, I think I'm happy.
+      @inline def allContain(area: SubArea, areas: Seq[Seq[SubArea]]): Boolean = {
+        var i = 0
+        var done = false
+        var found = true
+        val size = areas.size
+        while (!done && i < size) {
+          if (!anyContain(area, areas(i))) {
+            done = true
+            found = false
+          } else i += 1
+        }
+        found
+      }
+      @inline def anyContain(area: SubArea, areas: Seq[SubArea]): Boolean = {
+        var i = 0
+        var done = false
+        var found = false
+        val size = areas.size
+        while (!done && i < size) {
+          if (areas(i) eq area) {
+            found = true
+            done = true
+          } else i += 1
+        }
+        found
+      }
+      val tail = allAreas.tail
       for {
-        subArea <- allAreas(0) if allAreas.tail.forall(_.contains(subArea))
+        subArea <- allAreas(0) if allContain(subArea, tail)
       } yield subArea
     } else Seq.empty
-    result
   }
 
   private def normaliseRange(range: Range, boundingRange: Range): Seq[Range] = {

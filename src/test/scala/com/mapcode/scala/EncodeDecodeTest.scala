@@ -27,12 +27,17 @@ class EncodeDecodeTest extends FunSuite {
   }
 }
 
+// useful for profiling
+object EncodeDecodeTestApp extends App {
+  EncodeDecodeTest.doEncodeDecode(12345678)
+}
+
 object EncodeDecodeTest extends Matchers {
   private final val SampleSize = 1000
-  private final val LogEvery = 10
+  private final val LogEvery = 500
   private final val MaxErrorMeters = 10d
 
-  private def doEncodeDecode(seed: Long) {
+  def doEncodeDecode(seed: Long) {
     val randomGenerator = new java.util.Random(seed)
     var i: Int = 0
     while (i < SampleSize) {
