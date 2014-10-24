@@ -23,35 +23,27 @@ class ReferenceFileTest extends FunSuite with Matchers {
   import com.mapcode.scala.ReferenceFileTest._
 
   test("checkRandomReferenceRecords") {
-    checkFile(RANDOM_REFERENCE_FILE_1)
-    checkFile(RANDOM_REFERENCE_FILE_2)
-    checkFile(RANDOM_REFERENCE_FILE_3)
+    RandomFiles.par.foreach(checkFile)
   }
 
   test("checkGridReferenceRecords") {
-    checkFile(GRID_REFERENCE_FILE_1)
-    checkFile(GRID_REFERENCE_FILE_2)
-    checkFile(GRID_REFERENCE_FILE_3)
+    GridFiles.par.foreach(checkFile)
   }
 
   test("checkBoundariesReferenceRecords") {
-    checkFile(BOUNDARIES_REFERENCE_FILE)
+    BoundaryFiles.par.foreach(checkFile)
   }
 
   test("checkRandomReferenceRecordsPrecision2") {
-    checkFile(RANDOM_REFERENCE_FILE_1_HP)
-    checkFile(RANDOM_REFERENCE_FILE_2_HP)
-    checkFile(RANDOM_REFERENCE_FILE_3_HP)
+    RandomHpFiles.par.foreach(checkFile)
   }
 
   test("checkGridReferenceRecordsPrecision2") {
-    checkFile(GRID_REFERENCE_FILE_1_HP)
-    checkFile(GRID_REFERENCE_FILE_2_HP)
-    checkFile(GRID_REFERENCE_FILE_3_HP)
+    GridHpFiles.par.foreach(checkFile)
   }
 
   test("checkBoundariesReferenceRecordsPrecision2") {
-    checkFile(BOUNDARIES_REFERENCE_FILE_HP)
+    BoundaryHpFiles.par.foreach(checkFile)
   }
 
   private def checkFile(baseFileName: String) {
@@ -120,20 +112,12 @@ class ReferenceFileTest extends FunSuite with Matchers {
 
 
 object ReferenceFileTest extends Matchers {
-  val RANDOM_REFERENCE_FILE_1: String = "/random_1k.txt"
-  val RANDOM_REFERENCE_FILE_2: String = "/random_10k.txt"
-  val RANDOM_REFERENCE_FILE_3: String = "/random_100k.txt"
-  val RANDOM_REFERENCE_FILE_1_HP: String = "/random_hp_1k.txt"
-  val RANDOM_REFERENCE_FILE_2_HP: String = "/random_hp_10k.txt"
-  val RANDOM_REFERENCE_FILE_3_HP: String = "/random_hp_100k.txt"
-  val GRID_REFERENCE_FILE_1: String = "/grid_1k.txt"
-  val GRID_REFERENCE_FILE_2: String = "/grid_10k.txt"
-  val GRID_REFERENCE_FILE_3: String = "/grid_100k.txt"
-  val GRID_REFERENCE_FILE_1_HP: String = "/grid_hp_1k.txt"
-  val GRID_REFERENCE_FILE_2_HP: String = "/grid_hp_10k.txt"
-  val GRID_REFERENCE_FILE_3_HP: String = "/grid_hp_100k.txt"
-  val BOUNDARIES_REFERENCE_FILE: String = "/boundaries.txt"
-  val BOUNDARIES_REFERENCE_FILE_HP: String = "/boundaries_hp.txt"
+  val RandomFiles = Seq("/random_1k.txt", "/random_10k.txt", "/random_100k.txt")
+  val RandomHpFiles = Seq("/random_hp_1k.txt", "/random_hp_10k.txt", "/random_hp_100k.txt")
+  val GridFiles = Seq("/grid_1k.txt", "/grid_10k.txt", "/grid_100k.txt")
+  val GridHpFiles = Seq("/grid_hp_1k.txt", "/grid_hp_10k.txt", "/grid_hp_100k.txt")
+  val BoundaryFiles = Seq("/boundaries.txt")
+  val BoundaryHpFiles = Seq("boundaries_hp.txt")
 
   private def mkSuffixStream: Stream[Char] = Stream.tabulate(10)(x => ('a' + x).toChar)
 
