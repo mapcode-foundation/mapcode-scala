@@ -16,10 +16,14 @@
 package com.mapcode.scala
 
 private[scala] object CheckArgs {
-  private[mapcode] def checkRange[T <% Ordered[T]](param: =>String, value: T, min: T, max: T): Unit = {
+  def checkRange[T <% Ordered[T]](param: =>String, value: T, min: T, max: T): Unit =
     require(value >= min && value <= max, s"Parameter $param should be in range [$min, $max], but is: $value")
-  }
 
-  private[mapcode] def checkNonnull(param: String, obj: AnyRef): Unit =
+  def checkNonnull(param: String, obj: AnyRef): Unit =
     require(obj != null, s"Parameter $param should not be null")
+
+  def verify[T](value: T, msg: =>String)(f: T => Boolean): T = {
+    assert(f(value), msg)
+    value
+  }
 }
