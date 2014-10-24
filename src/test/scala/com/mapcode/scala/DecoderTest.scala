@@ -17,7 +17,7 @@ package com.mapcode.scala
 
 import org.scalatest.{FunSuite, Matchers}
 
-class MapcodeCodecTest extends FunSuite with Matchers {
+class DecoderTest extends FunSuite with Matchers {
   test("decodeTomTomOffice1") {
     val point: Point = MapcodeCodec.decode("49.4V", Territory.NLD)
     point.latMicroDeg should be(52376514)
