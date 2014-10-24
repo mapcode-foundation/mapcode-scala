@@ -22,28 +22,8 @@ class ReferenceFileTest extends FunSuite with Matchers {
 
   import com.mapcode.scala.ReferenceFileTest._
 
-  test("checkRandomReferenceRecords") {
-    RandomFiles.par.foreach(checkFile)
-  }
-
-  test("checkGridReferenceRecords") {
-    GridFiles.par.foreach(checkFile)
-  }
-
-  test("checkBoundariesReferenceRecords") {
-    BoundaryFiles.par.foreach(checkFile)
-  }
-
-  test("checkRandomReferenceRecordsPrecision2") {
-    RandomHpFiles.par.foreach(checkFile)
-  }
-
-  test("checkGridReferenceRecordsPrecision2") {
-    GridHpFiles.par.foreach(checkFile)
-  }
-
-  test("checkBoundariesReferenceRecordsPrecision2") {
-    BoundaryHpFiles.par.foreach(checkFile)
+  test("allFiles") {
+    AllFiles.par.foreach(checkFile)
   }
 
   private def checkFile(baseFileName: String) {
@@ -118,6 +98,7 @@ object ReferenceFileTest extends Matchers {
   val GridHpFiles = Seq("/grid_hp_1k.txt", "/grid_hp_10k.txt", "/grid_hp_100k.txt")
   val BoundaryFiles = Seq("/boundaries.txt")
   val BoundaryHpFiles = Seq("boundaries_hp.txt")
+  val AllFiles = Seq(RandomFiles, RandomHpFiles, GridFiles, GridHpFiles, BoundaryFiles, BoundaryHpFiles).flatten
 
   private def mkSuffixStream: Stream[Char] = Stream.tabulate(10)(x => ('a' + x).toChar)
 
