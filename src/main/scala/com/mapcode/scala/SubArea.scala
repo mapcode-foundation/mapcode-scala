@@ -36,12 +36,7 @@ private[scala] case class SubArea(latRange: Range,
                                   subAreaId: Int) {
 
   // this is an important optimization -- deep equality testing isn't necessary and super slow
-  override def equals(obj: scala.Any): Boolean = {
-    obj match {
-      case ref: AnyRef => ref eq this
-      case _ => false
-    }
-  }
+  override def equals(obj: scala.Any): Boolean = obj.asInstanceOf[AnyRef] eq this
 
   def minX: Int = lonRange.min
 
@@ -133,62 +128,50 @@ private[scala] object SubArea {
   def getArea(i: Int): Option[SubArea] = Try(subAreas(i)).toOption
 
   def getAreasForPoint(point: Point): Seq[SubArea] = {
+
     def findRange(map: SubAreaMap, index: Int): Seq[Seq[SubArea]] = {
-      map.containsKey(index) match {
-        case false =>
-          (map.lowerEntry(index), map.higherEntry(index)) match {
-            case (lower, higher) if lower == null || higher == null => Seq.empty
-            case (lower, higher) => Seq(lower.getValue, higher.getValue)
-          }
-        case true =>
-          Seq(map.get(index))
-      }
+      if (map.containsKey(index)) Seq(map.get(index))
+      else Seq(map.lowerEntry(index).getValue, map.higherEntry(index).getValue)
     }
 
-    val allAreas = findRange(latMap, point.latMicroDeg) match {
-      case range if range.isEmpty => Seq.empty
-      case range => range ++ findRange(lonMap, point.lonMicroDeg)
+    val allAreas = findRange(latMap, point.latMicroDeg) ++ findRange(lonMap, point.lonMicroDeg)
+    // this is quite performance critical, so I've hand-optimized
+    // this to be as fast as I can make it. Sadly all this had to be
+    // added to make up for a much more slow:
+    //  subArea <- allAreas(0) if allAreas.tail.forall(_.contains(subArea))
+    // On the other hand, I thought maybe making Data immutable was the core
+    // issue, so if there is one hand-tuned piece of code to bring this
+    // within a few tens of percent of the java version, I think I'm happy.
+    @inline def allContain(area: SubArea, areas: Seq[Seq[SubArea]]): Boolean = {
+      var i = 0
+      var done = false
+      var found = true
+      val size = areas.size
+      while (!done && i < size) {
+        if (!anyContain(area, areas(i))) {
+          done = true
+          found = false
+        } else i += 1
+      }
+      found
     }
-
-    if (allAreas.nonEmpty) {
-      // this is quite performance critical, so I've hand-optimized
-      // this to be as fast as I can make it. Sadly all this had to be
-      // added to make up for a much more slow:
-      //  subArea <- allAreas(0) if allAreas.tail.forall(_.contains(subArea))
-      // On the other hand, I thought maybe making Data immutable was the core
-      // issue, so if there is one hand-tuned piece of code to bring this
-      // within a few tens of percent of the java version, I think I'm happy.
-      @inline def allContain(area: SubArea, areas: Seq[Seq[SubArea]]): Boolean = {
-        var i = 0
-        var done = false
-        var found = true
-        val size = areas.size
-        while (!done && i < size) {
-          if (!anyContain(area, areas(i))) {
-            done = true
-            found = false
-          } else i += 1
-        }
-        found
+    @inline def anyContain(area: SubArea, areas: Seq[SubArea]): Boolean = {
+      var i = 0
+      var done = false
+      var found = false
+      val size = areas.size
+      while (!done && i < size) {
+        if (areas(i) eq area) {
+          found = true
+          done = true
+        } else i += 1
       }
-      @inline def anyContain(area: SubArea, areas: Seq[SubArea]): Boolean = {
-        var i = 0
-        var done = false
-        var found = false
-        val size = areas.size
-        while (!done && i < size) {
-          if (areas(i) eq area) {
-            found = true
-            done = true
-          } else i += 1
-        }
-        found
-      }
-      val tail = allAreas.tail
-      for {
-        subArea <- allAreas(0) if allContain(subArea, tail)
-      } yield subArea
-    } else Seq.empty
+      found
+    }
+    val tail = allAreas.tail
+    for {
+      subArea <- allAreas(0) if allContain(subArea, tail)
+    } yield subArea
   }
 
   private def normaliseRange(range: Range, boundingRange: Range): Seq[Range] = {
