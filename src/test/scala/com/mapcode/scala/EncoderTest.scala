@@ -39,7 +39,10 @@ class EncoderTest extends FunSuite with Matchers {
 
   test("encodeToInternational1") {
     val (lat, lon) = (52.376514, 4.908542)
-    MapcodeCodec.encodeToInternational(lat, lon).mapcode should be("VHXGB.1J9J")
+    val mapcode = MapcodeCodec.encodeToInternational(lat, lon)
+    mapcode.mapcode should be("VHXGB.1J9J")
+    mapcode.asInternationalFullName should be("International VHXGB.1J9J")
+    mapcode.asLocal should be("VHXGB.1J9J")
   }
 
   test("encodeToInternational2") {
@@ -76,22 +79,31 @@ class EncoderTest extends FunSuite with Matchers {
 
   test("illegalArgument1") {
     an[IllegalArgumentException] should be thrownBy MapcodeCodec.encode(-91, 0)
+    an[IllegalArgumentException] should be thrownBy MapcodeCodec.encodeToInternational(-91, 0)
+    an[IllegalArgumentException] should be thrownBy MapcodeCodec.encodeToShortest(-91, 0)
   }
 
   test("illegalArgument2") {
     an[IllegalArgumentException] should be thrownBy MapcodeCodec.encode(91, 0)
+    an[IllegalArgumentException] should be thrownBy MapcodeCodec.encodeToInternational(91, 0)
+    an[IllegalArgumentException] should be thrownBy MapcodeCodec.encodeToShortest(91, 0)
   }
 
   test("illegalArgument3") {
     an[IllegalArgumentException] should be thrownBy MapcodeCodec.encode(0, -181)
+    an[IllegalArgumentException] should be thrownBy MapcodeCodec.encodeToInternational(0, -181)
+    an[IllegalArgumentException] should be thrownBy MapcodeCodec.encodeToShortest(0, -181)
   }
 
   test("illegalArgument4") {
     an[IllegalArgumentException] should be thrownBy MapcodeCodec.encode(0, 181)
+    an[IllegalArgumentException] should be thrownBy MapcodeCodec.encodeToInternational(0, 181)
+    an[IllegalArgumentException] should be thrownBy MapcodeCodec.encodeToShortest(0, 181)
   }
 
   test("illegalArgument5") {
     an[IllegalArgumentException] should be thrownBy MapcodeCodec.encode(0, 0, null)
+    an[IllegalArgumentException] should be thrownBy MapcodeCodec.encodeToShortest(0, 181, null)
   }
 }
 

@@ -16,37 +16,25 @@
 package com.mapcode.scala
 
 import com.mapcode.scala.Common.{countCityCoordinatesForCountry, getFirstNamelessRecord, nc, xDivider, xSide, ySide}
-
 import scala.collection.mutable.ArrayBuffer
+import CheckArgs.{checkNonnull, checkRange}
 
 object Encoder {
   private final val encode_chars: Array[Char] =
     Array('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'B', 'C', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N',
       'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'X', 'Y', 'Z')
 
-  private[scala] def encode(argLatDeg: Double,
-                            argLonDeg: Double,
+  private[scala] def encode(latDeg: Double,
+                            lonDeg: Double,
                             territory: Option[Territory.Territory],
                             isRecursive: Boolean,
                             limitToOneResult: Boolean,
                             allowWorld: Boolean,
-                            argStateOverride: Option[Territory.Territory] = None): Seq[Mapcode] = {
-    var latDeg: Double = argLatDeg
-    var lonDeg: Double = argLonDeg
-    var stateOverride: Option[Territory.Territory] = argStateOverride
-    if (latDeg > 90) {
-      latDeg -= 180
-    }
-    else if (latDeg < -90) {
-      latDeg += 180
-    }
-    if (lonDeg > 179.999999) {
-      lonDeg -= 360
-    }
-    else if (lonDeg < -180) {
-      lonDeg += 180
-    }
-    val pointToEncode: Point = Point.fromDeg(latDeg, lonDeg)
+                            stateOverride: Option[Territory.Territory] = None): Seq[Mapcode] = {
+    checkRange("latDeg", latDeg, Point.LAT_DEG_MIN, Point.LAT_DEG_MAX)
+    checkRange("lonDeg", lonDeg, Point.LON_DEG_MIN, Point.LON_DEG_MAX)
+    checkNonnull("restrictToTerritory", territory)
+    val pointToEncode = Point.fromDeg(latDeg, if (lonDeg > 179.999999) lonDeg - 360 else lonDeg)
     val areas: Seq[SubArea] = SubArea.getAreasForPoint(pointToEncode)
     val results = ArrayBuffer[Mapcode]()
     var lastbasesubareaID: Int = -1
@@ -66,9 +54,8 @@ object Encoder {
               val territoryParent = currentEncodeTerritory.parentTerritory
               if (mapcoderData.useless && i == upto && territoryParent.isDefined) {
                 if (!isRecursive) {
-                  stateOverride = Option(currentEncodeTerritory)
-                  results ++= encode(latDeg, lonDeg, territoryParent, isRecursive = true, limitToOneResult = limitToOneResult, allowWorld = allowWorld, stateOverride)
-                  stateOverride = None
+                  results ++= encode(pointToEncode.latDeg, pointToEncode.lonDeg, territoryParent,
+                    isRecursive = true, limitToOneResult = limitToOneResult, allowWorld = allowWorld, Option(currentEncodeTerritory))
                 }
               } else {
                 if (mapcoderData.pipeType == 0 && !mapcoderData.nameless) {
@@ -85,6 +72,7 @@ object Encoder {
                 else {
                   mapcode = encodeStarpipe(pointToEncode, mapcoderData, i)
                 }
+
                 if (mapcode.isDefined && mapcode.get.length > 4) {
                   mapcode = aeuPack(mapcode.get)
                   var encodeTerritory: Territory.Territory = currentEncodeTerritory
@@ -107,7 +95,7 @@ object Encoder {
         }
       }
     }
-    results
+   results    // may be empty if coords not within territory
   }
 
   private def encodeGrid(m: Int, point: Point, mapcoderData: Data): Option[String] = {
@@ -117,94 +105,83 @@ object Encoder {
     if (codex == 14) {
       codex = 23
     }
-    val dc: Int = codex / 10
-    val codexlow: Int = codex % 10
-    var divx: Int = 0
-    var divy: Int = DataAccess.smartDiv(m)
-    if (divy == 1) {
-      divx = xSide(dc)
+    val dc = codex / 10
+    val codexlow = codex % 10
+    var divy = DataAccess.smartDiv(m)
+    val divx = if (divy == 1) {
       divy = ySide(dc)
+      xSide(dc)
     }
     else {
-      divx = nc(dc) / divy
+      nc(dc) / divy
     }
     val Some(mapcoderRect) = mapcoderData.mapcoderRect
-    val ygridsize: Int = (mapcoderRect.maxY - mapcoderRect.minY + divy - 1) / divy
-    var rely: Int = pointToEncode.latMicroDeg - mapcoderRect.minY
-    rely = rely / ygridsize
-    val xgridsize: Int = (mapcoderRect.maxX - mapcoderRect.minX + divx - 1) / divx
-    var relx: Int = pointToEncode.lonMicroDeg - mapcoderRect.minX
-    if (relx < 0) {
+    val ygridsize = (mapcoderRect.maxY - mapcoderRect.minY + divy - 1) / divy
+    var rely = (pointToEncode.latMicroDeg - mapcoderRect.minY) / ygridsize
+    val xgridsize = (mapcoderRect.maxX - mapcoderRect.minX + divx - 1) / divx
+    var relx = pointToEncode.lonMicroDeg - mapcoderRect.minX
+    while (relx < 0) {
       pointToEncode = Point.fromMicroDeg(pointToEncode.latMicroDeg, pointToEncode.lonMicroDeg + 360000000)
       relx += 360000000
     }
-    else if (relx >= 360000000) {
+    while (relx >= 360000000) {
       pointToEncode = Point.fromMicroDeg(pointToEncode.latMicroDeg, pointToEncode.lonMicroDeg - 360000000)
       relx -= 360000000
     }
-    if (relx < 0) {
-      None
-    } else {
-      relx = relx / xgridsize
-      if (relx >= divx) {
-        None
-      } else {
-        var v: Int = 0
-        if (divx != divy && codex > 24) {
-          v = encode6(relx, rely, divx, divy)
-        }
-        else {
-          v = relx * divy + divy - 1 - rely
-        }
-        var result: String = fastEncode(v, dc)
-        if (dc == 4 && divx == xSide(4) && divy == ySide(4)) {
-          result = String.valueOf(result.charAt(0)) + result.charAt(2) + result.charAt(1) + result.charAt(3)
-        }
-
-        rely = mapcoderRect.minY + rely * ygridsize
-        relx = mapcoderRect.minX + relx * xgridsize
-        val dividery: Int = (ygridsize + ySide(codexlow) - 1) / ySide(codexlow)
-        val dividerx: Int = (xgridsize + xSide(codexlow) - 1) / xSide(codexlow)
-        result += '.'
-        val nrchars: Int = codexlow
-        var difx: Int = pointToEncode.lonMicroDeg - relx
-        var dify: Int = pointToEncode.latMicroDeg - rely
-        val extrax: Int = difx % dividerx
-        val extray: Int = dify % dividery
-        difx = difx / dividerx
-        dify = dify / dividery
-        dify = ySide(nrchars) - 1 - dify
-        if (nrchars == 3) {
-          result += encodeTriple(difx, dify)
-        }
-        else {
-          var postfix: String = fastEncode(difx * ySide(nrchars) + dify, nrchars)
-          if (nrchars == 4) {
-            postfix = String.valueOf(postfix.charAt(0)) + postfix.charAt(2) + postfix.charAt(1) + postfix.charAt(3)
-          }
-          result += postfix
-        }
-        if (orgcodex == 14) {
-          result = result.charAt(0) + "." + result.charAt(1) + result.substring(3)
-        }
-        result += addPostfix(extrax << 2, extray, dividerx << 2, dividery)
-        if (result.nonEmpty) Some(mapcoderData.pipeLetter.getOrElse("") + result)
-        else None
-      }
+    relx = relx / xgridsize
+    val v = if (divx != divy && codex > 24) {
+      encode6(relx, rely, divx, divy)
     }
+    else {
+      relx * divy + divy - 1 - rely
+    }
+    var result: String = fastEncode(v, dc)
+    if (dc == 4 && divx == xSide(4) && divy == ySide(4)) {
+      result = String.valueOf(result.charAt(0)) + result.charAt(2) + result.charAt(1) + result.charAt(3)
+    }
+
+    rely = mapcoderRect.minY + rely * ygridsize
+    relx = mapcoderRect.minX + relx * xgridsize
+    val dividery = (ygridsize + ySide(codexlow) - 1) / ySide(codexlow)
+    val dividerx = (xgridsize + xSide(codexlow) - 1) / xSide(codexlow)
+    result += '.'
+    val nrchars = codexlow
+    var difx = pointToEncode.lonMicroDeg - relx
+    var dify = pointToEncode.latMicroDeg - rely
+    val extrax = difx % dividerx
+    val extray = dify % dividery
+    difx = difx / dividerx
+    dify = dify / dividery
+    dify = ySide(nrchars) - 1 - dify
+    if (nrchars == 3) {
+      result += encodeTriple(difx, dify)
+    }
+    else {
+      var postfix: String = fastEncode(difx * ySide(nrchars) + dify, nrchars)
+      if (nrchars == 4) {
+        postfix = String.valueOf(postfix.charAt(0)) + postfix.charAt(2) + postfix.charAt(1) + postfix.charAt(3)
+      }
+      result += postfix
+    }
+    if (orgcodex == 14) {
+      result = result.charAt(0) + "." + result.charAt(1) + result.substring(3)
+    }
+    result += addPostfix(extrax << 2, extray, dividerx << 2, dividery)
+    if (result.nonEmpty) Some(mapcoderData.pipeLetter.getOrElse("") + result)
+    else None
   }
 
   private def encodeStarpipe(pointToEncode: Point, argMapcoderData: Data, thisindex: Int): Option[String] = {
     var mapcoderData = argMapcoderData
-    val starpipe_result: StringBuilder = new StringBuilder
-    val thiscodexlen: Int = mapcoderData.codexLen
-    var done: Boolean = false
-    var storageStart: Int = 0
-    var firstindex: Int = thisindex
+    val starpipe_result = new StringBuilder
+    val thiscodexlen = mapcoderData.codexLen
+    var done = false
+    var storageStart = 0
+    var firstindex = thisindex
     while (Data.calcStarPipe(firstindex - 1) && Data.calcCodexLen(firstindex - 1) == thiscodexlen) {
       firstindex -= 1
     }
-    var i: Int = firstindex
+    var i = firstindex
     while (!done) {
       if (Data.calcCodexLen(i) != thiscodexlen) {
         done = true
@@ -246,8 +223,8 @@ object Encoder {
           }
           storageStart += product
         }
-        i += 1
       }
+      i += 1
     }
     if (starpipe_result.isEmpty) None
     else Some(starpipe_result.toString())

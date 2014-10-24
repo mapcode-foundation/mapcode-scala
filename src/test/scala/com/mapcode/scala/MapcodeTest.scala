@@ -78,4 +78,8 @@ class MapcodeTest extends FunSuite with Matchers {
     Mapcode.convertToAscii("\u30c1\u30ca.8\u30c1") should be("KM.8K")
     Mapcode.convertToAscii("\u0397\u03a0.\u03982-\u0411") should be("HJ.Q2-Z")
   }
+
+  test("invalid map code") {
+    an[IllegalArgumentException] should be thrownBy Mapcode("", Territory.AAA)
+  }
 }

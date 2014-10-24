@@ -15,7 +15,7 @@
  */
 package com.mapcode.scala
 
-import com.mapcode.scala.CheckArgs.{checkNonnull, checkRange}
+import com.mapcode.scala.CheckArgs.{checkNonnull, checkRange, verify}
 
 /**
  * ----------------------------------------------------------------------------------------------
@@ -42,11 +42,8 @@ object MapcodeCodec {
    * @return Non-empty, ordered list of mapcode information records, see { @link Mapcode}.
    */
   def encode(latDeg: Double, lonDeg: Double): Seq[Mapcode] = {
-    checkRange("latDeg", latDeg, Point.LAT_DEG_MIN, Point.LAT_DEG_MAX)
-    checkRange("lonDeg", lonDeg, Point.LON_DEG_MIN, Point.LON_DEG_MAX)
-    val results: Seq[Mapcode] = Encoder.encode(latDeg, lonDeg, None, isRecursive = false, limitToOneResult = false, allowWorld = true)
-    assert(results.size >= 1)
-    results
+    val results = Encoder.encode(latDeg, lonDeg, None, isRecursive = false, limitToOneResult = false, allowWorld = true)
+    verify(results, s"Every coordinate should resolve to something: ($latDeg, $lonDeg)")(_.size >= 1)
   }
 
   /**
@@ -59,11 +56,8 @@ object MapcodeCodec {
    * @throws IllegalArgumentException Thrown if latitude or longitude are out of range.
    */
   def encodeToShortest(latDeg: Double, lonDeg: Double): Mapcode = {
-    checkRange("latDeg", latDeg, Point.LAT_DEG_MIN, Point.LAT_DEG_MAX)
-    checkRange("lonDeg", lonDeg, Point.LON_DEG_MIN, Point.LON_DEG_MAX)
     val results = Encoder.encode(latDeg, lonDeg, None, isRecursive = false, limitToOneResult = true, allowWorld = true)
-    assert(results.size == 1)
-    results.head
+    verify(results, s"Should result in at least 1 result: ($latDeg, $lonDeg)")(_.size >= 1).head
   }
 
   /**
@@ -78,13 +72,13 @@ object MapcodeCodec {
    * @throws UnknownMapcodeException  Thrown if no mapcode was found for the lat/lon matching the territory.
    */
   def encodeToShortest(latDeg: Double, lonDeg: Double, restrictToTerritory: Territory.Territory): Mapcode = {
-    checkRange("latDeg", latDeg, Point.LAT_DEG_MIN, Point.LAT_DEG_MAX)
-    checkRange("lonDeg", lonDeg, Point.LON_DEG_MIN, Point.LON_DEG_MAX)
-    val results = Encoder.encode(latDeg, lonDeg, Some(restrictToTerritory), isRecursive = false, limitToOneResult = true, allowWorld = false)
+    require(restrictToTerritory != null, "Null territory not allowed")
+    val results = Encoder.encode(latDeg, lonDeg, Some(restrictToTerritory),
+      isRecursive = false, limitToOneResult = true, allowWorld = false)
     if (results.isEmpty) {
-      throw new UnknownMapcodeException("No Mapcode for lat=" + latDeg + ", lon=" + lonDeg + ", territory=" + restrictToTerritory)
+      throw new UnknownMapcodeException(s"No Mapcode for lat=$latDeg, lon=$lonDeg, territory=$restrictToTerritory")
     }
-    assert(results.size == 1)
+    verify(results, s"Should result in exactly 1 result: ($latDeg, $lonDeg): $results")(_.size == 1).head
     results.head
   }
 
@@ -97,10 +91,8 @@ object MapcodeCodec {
    * @throws IllegalArgumentException Thrown if latitude or longitude are out of range.
    */
   def encodeToInternational(latDeg: Double, lonDeg: Double): Mapcode = {
-    checkRange("latDeg", latDeg, Point.LAT_DEG_MIN, Point.LAT_DEG_MAX)
-    checkRange("lonDeg", lonDeg, Point.LON_DEG_MIN, Point.LON_DEG_MAX)
     val results = encode(latDeg, lonDeg, Territory.AAA)
-    assert(results.size >= 1)
+    verify(results, s"Should result in at least 1 result: ($latDeg, $lonDeg) => $results")(_.size >= 1)
     results.last
   }
 
@@ -122,9 +114,7 @@ object MapcodeCodec {
    * @throws IllegalArgumentException Thrown if latitude or longitude are out of range.
    */
   def encode(latDeg: Double, lonDeg: Double, restrictToTerritory: Territory.Territory): Seq[Mapcode] = {
-    checkRange("latDeg", latDeg, Point.LAT_DEG_MIN, Point.LAT_DEG_MAX)
-    checkRange("lonDeg", lonDeg, Point.LON_DEG_MIN, Point.LON_DEG_MAX)
-    checkNonnull("restrictToTerritory", restrictToTerritory)
+    require(restrictToTerritory != null, "Null territory not allowed")
     Encoder.encode(latDeg, lonDeg, Some(restrictToTerritory), isRecursive = false, limitToOneResult = false, allowWorld = false)
   }
 
