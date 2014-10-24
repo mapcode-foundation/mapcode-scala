@@ -123,7 +123,6 @@ object Decoder {
               // RESTRICTUSELESS
               if (mapcoderData.useless && result.isDefined) {
                 var fitssomewhere = false
-                var i = 0
                 var j = upto - 1
                 while (!fitssomewhere && j >= from) {
                   mapcoderData = Data.apply(j)
@@ -261,7 +260,7 @@ object Decoder {
     var nrX: Int = 0
     var swapletters: Boolean = false
     if (mapcoderData.codex != 21 && a <= 31) {
-      val offset: Int = decode_chars(result.charAt(0).asInstanceOf[Int])
+      val offset: Int = decode_chars(result.charAt(0).toInt)
       if (offset < r * (p + 1)) {
         nrX = offset / (p + 1)
       }
@@ -271,7 +270,7 @@ object Decoder {
       }
     }
     else if (mapcoderData.codex != 21 && a < 62) {
-      nrX = decode_chars(result.charAt(0).asInstanceOf[Int])
+      nrX = decode_chars(result.charAt(0).toInt)
       if (nrX < (62 - a)) {
         swapletters = mapcoderData.codex == 22
       }
@@ -395,7 +394,6 @@ object Decoder {
     var voweled: Boolean = false
     val lastpos: Int = str.length - 1
     var dotpos: Int = str.indexOf('.')
-    var result = ""
     if (dotpos >= 2 && lastpos >= dotpos + 2) {
       if (str.charAt(0) == 'A') {
         voweled = true
@@ -428,7 +426,7 @@ object Decoder {
             v += 33
           }
           else {
-            val ve: Int = decode_chars(str.charAt(lastpos).asInstanceOf[Int])
+            val ve: Int = decode_chars(str.charAt(lastpos).toInt)
             if (ve < 0) {
               return ""
             }
@@ -449,11 +447,11 @@ object Decoder {
       var result = str
       while (!done && v <= lastpos) {
         if (v != dotpos) {
-          if (decode_chars(str.charAt(v).asInstanceOf[Int]) < 0) {
+          if (decode_chars(str.charAt(v).toInt) < 0) {
             result = ""
             done = true
           }
-          else if (voweled && decode_chars(str.charAt(v).asInstanceOf[Int]) > 9) {
+          else if (voweled && decode_chars(str.charAt(v).toInt) > 9) {
             result = ""
             done = true
           }
@@ -482,7 +480,9 @@ object Decoder {
         while (!found && i < UNICODE2ASCII.size) {
           if (char >= UNICODE2ASCII(i).min && char <= UNICODE2ASCII(i).max) {
             val convert = UNICODE2ASCII(i).convert
-            asciiBuffer.append(convert.charAt(char - UNICODE2ASCII(i).min))
+            val convertIndex = char - UNICODE2ASCII(i).min
+            if (convertIndex >= 0 && convertIndex < convert.size) asciiBuffer.append(convert.charAt(convertIndex))
+            else asciiBuffer.append("?")
             found = true
           }
           else i += 1
@@ -497,7 +497,7 @@ object Decoder {
   }
 
   private def decodeTriple(str: String): Point = {
-    val c1: Byte = decode_chars(str.charAt(0).asInstanceOf[Int]).asInstanceOf[Byte]
+    val c1: Byte = decode_chars(str.charAt(0).toInt).toByte
     val x: Int = fastDecode(str.substring(1))
     if (c1 < 24) Point.fromMicroDeg(c1 / 6 * 34 + x % 34, (c1 % 6) * 28 + x / 34)
     else Point.fromMicroDeg(x % 40 + 136, x / 40 + 24 * (c1 - 24))
@@ -521,7 +521,7 @@ object Decoder {
     i = 0
     var done = false
     while (!done && i < code.length) {
-      val c: Int = code.charAt(i).asInstanceOf[Int]
+      val c: Int = code.charAt(i).toInt
       if (c == 46) {
         done = true
       } else {
@@ -537,33 +537,21 @@ object Decoder {
     value
   }
 
-  private def add2res(y: Int, x: Int, dividerx4: Int, dividery: Int, ydirection: Int, extrapostfix: String): Point = {
-    if (extrapostfix.isEmpty) {
-      Point.fromMicroDeg(y + (dividery / 2) * ydirection, x + dividerx4 / 8)
+  private def add2res(y: Int, x: Int, dividerX4: Int, dividerY: Int, yDirection: Int, extraPostfix: String): Point = {
+    if (extraPostfix.isEmpty) {
+      Point.fromMicroDeg(y + (dividerY / 2) * yDirection, x + dividerX4 / 8)
     } else {
-      var c1: Int = extrapostfix.charAt(0).asInstanceOf[Int]
-      c1 = decode_chars(c1)
-      if (c1 < 0) {
-        c1 = 0
-      }
-      else if (c1 > 29) {
-        c1 = 29
-      }
-      val y1: Int = c1 / 5
-      val x1: Int = c1 % 5
-      var c2: Int = if (extrapostfix.length == 2) extrapostfix.charAt(1).asInstanceOf[Int] else 72
-      c2 = decode_chars(c2)
-      if (c2 < 0) {
-        c2 = 0
-      }
-      else if (c2 > 29) {
-        c2 = 29
-      }
-      val y2: Int = c2 / 6
-      val x2: Int = c2 % 6
-      val extrax: Int = ((x1 * 12 + 2 * x2 + 1) * dividerx4 + 120) / 240
-      val extray: Int = ((y1 * 10 + 2 * y2 + 1) * dividery + 30) / 60
-      Point.fromMicroDeg(y + extray * ydirection, x + extrax)
+      var c1 = extraPostfix.charAt(0).toInt
+      c1 = math.min(29, math.max(0, decode_chars(c1)))
+      val y1 = c1 / 5
+      val x1 = c1 % 5
+      var c2 = if (extraPostfix.length == 2) extraPostfix.charAt(1).toInt else 72
+      c2 = math.min(29, math.max(0, decode_chars(c2)))
+      val y2 = c2 / 6
+      val x2 = c2 % 6
+      val extraX = ((x1 * 12 + 2 * x2 + 1) * dividerX4 + 120) / 240
+      val extraY = ((y1 * 10 + 2 * y2 + 1) * dividerY + 30) / 60
+      Point.fromMicroDeg(y + extraY * yDirection, x + extraX)
     }
   }
 

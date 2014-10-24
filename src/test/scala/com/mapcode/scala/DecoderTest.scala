@@ -15,9 +15,10 @@
  */
 package com.mapcode.scala
 
+import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import org.scalatest.{FunSuite, Matchers}
 
-class DecoderTest extends FunSuite with Matchers {
+class DecoderTest extends FunSuite with Matchers with GeneratorDrivenPropertyChecks {
   test("decodeTomTomOffice1") {
     val point: Point = MapcodeCodec.decode("49.4V", Territory.NLD)
     point.latMicroDeg should be(52376514)
@@ -127,5 +128,13 @@ class DecoderTest extends FunSuite with Matchers {
 
   test("nullArgument3") {
     an[NullPointerException] should be thrownBy MapcodeCodec.decode(null)
+  }
+
+  test("decodeUTF16 should be able to correctly process any string input") {
+    forAll {
+      (str: String) =>
+        val converted = Decoder.decodeUTF16(str)
+        converted.size should be(str.size)
+    }
   }
 }
