@@ -20,7 +20,7 @@ case class UnknownMapcodeException(message: String) extends Exception(message)
 
 object Decoder {
   private final val CCODE_EARTH: Int = 540
-  private final val decode_chars: Array[Int] = Array(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  private final val decode_chars: Array[Byte] = Array(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
     -1, -1, -1, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, -1, -1, -1, -1, -1, -1, -1, -2, 10, 11, 12, -3, 13, 14, 15, 1, 16,
     17, 18, 19, 20, 0, 21, 22, 23, 24, 25, -4, 26, 27, 28, 29, 30, -1, -1, -1, -1, -1, -1, -2, 10, 11, 12, -3, 13, 14,
@@ -29,7 +29,7 @@ object Decoder {
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1)
+    -1, -1, -1, -1, -1, -1, -1).map(_.toByte)
   private final val UNICODE2ASCII = Array(Unicode2Ascii(0x0041, 0x005a, "ABCDEFGHIJKLMNOPQRSTUVWXYZ"),
     Unicode2Ascii(0x0041, 0x005a, "ABCDEFGHIJKLMNOPQRSTUVWXYZ"), // Roman
     Unicode2Ascii(0x0391, 0x03a9, "ABGDFZHQIKLMNCOJP?STYVXRW"), // Greek
@@ -260,7 +260,7 @@ object Decoder {
     var nrX: Int = 0
     var swapletters: Boolean = false
     if (mapcoderData.codex != 21 && a <= 31) {
-      val offset: Int = decode_chars(result.charAt(0).toInt)
+      val offset: Int = decode_chars(result.charAt(0))
       if (offset < r * (p + 1)) {
         nrX = offset / (p + 1)
       }
@@ -270,7 +270,7 @@ object Decoder {
       }
     }
     else if (mapcoderData.codex != 21 && a < 62) {
-      nrX = decode_chars(result.charAt(0).toInt)
+      nrX = decode_chars(result.charAt(0))
       if (nrX < (62 - a)) {
         swapletters = mapcoderData.codex == 22
       }
@@ -426,7 +426,7 @@ object Decoder {
             v += 33
           }
           else {
-            val ve: Int = decode_chars(str.charAt(lastpos).toInt)
+            val ve: Int = decode_chars(str.charAt(lastpos))
             if (ve < 0) {
               return ""
             }
@@ -447,11 +447,11 @@ object Decoder {
       var result = str
       while (!done && v <= lastpos) {
         if (v != dotpos) {
-          if (decode_chars(str.charAt(v).toInt) < 0) {
+          if (decode_chars(str.charAt(v)) < 0) {
             result = ""
             done = true
           }
-          else if (voweled && decode_chars(str.charAt(v).toInt) > 9) {
+          else if (voweled && decode_chars(str.charAt(v)) > 9) {
             result = ""
             done = true
           }
@@ -497,7 +497,7 @@ object Decoder {
   }
 
   private def decodeTriple(str: String): Point = {
-    val c1: Byte = decode_chars(str.charAt(0).toInt).toByte
+    val c1: Byte = decode_chars(str.charAt(0))
     val x: Int = fastDecode(str.substring(1))
     if (c1 < 24) Point.fromMicroDeg(c1 / 6 * 34 + x % 34, (c1 % 6) * 28 + x / 34)
     else Point.fromMicroDeg(x % 40 + 136, x / 40 + 24 * (c1 - 24))
@@ -516,12 +516,11 @@ object Decoder {
   }
 
   private def fastDecode(code: String): Int = {
-    var value: Int = 0
-    var i: Int = 0
-    i = 0
+    var value = 0
+    var i = 0
     var done = false
     while (!done && i < code.length) {
-      val c: Int = code.charAt(i).toInt
+      val c = code.charAt(i).toInt
       if (c == 46) {
         done = true
       } else {
