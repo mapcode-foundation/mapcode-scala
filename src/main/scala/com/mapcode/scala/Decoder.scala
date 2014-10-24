@@ -251,9 +251,6 @@ object Decoder {
       result = result.substring(0, 2) + result.substring(3)
     }
     var a: Int = Common.countCityCoordinatesForCountry(mapcoderData.codex, firstrec, firstrec)
-    if (a < 2) {
-      a = 1
-    }
     val p: Int = 31 / a
     val r: Int = 31 % a
     var v: Int = 0
@@ -415,7 +412,7 @@ object Decoder {
           v = -1
         }
         if (v >= 0) {
-          val e: Char = str.charAt(lastpos)
+          val e = str.charAt(lastpos)
           if (e == 'A') {
             v += 31
           }
@@ -426,7 +423,7 @@ object Decoder {
             v += 33
           }
           else {
-            val ve: Int = decode_chars(str.charAt(lastpos))
+            val ve = decode_chars(str.charAt(lastpos))
             if (ve < 0) {
               return ""
             }

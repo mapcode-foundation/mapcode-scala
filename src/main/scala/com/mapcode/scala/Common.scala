@@ -44,9 +44,10 @@ private[scala] object Common {
     else xDivider19((-maxY) >> 19)
   }
 
+  /** Guaranteed to return a value >= 1 */
   def countCityCoordinatesForCountry(sameCodex: Int, index: Int, firstCode: Int): Int = {
-    Stream.from(index, step = 1).takeWhile(e => Data.calcCodex(e) == sameCodex).last + 1 -
-      getFirstNamelessRecord(sameCodex, index, firstCode)
+    math.max(1, Stream.from(index, step = 1).takeWhile(e => Data.calcCodex(e) == sameCodex).last + 1 -
+      getFirstNamelessRecord(sameCodex, index, firstCode))
   }
 
   def getFirstNamelessRecord(sameCodex: Int, index: Int, firstCode: Int): Int =
