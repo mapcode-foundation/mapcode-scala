@@ -129,7 +129,7 @@ private[scala] object SubArea {
 
   def getAreasForPoint(point: Point): Seq[SubArea] = {
 
-    def findRange(map: SubAreaMap, index: Int): Seq[Seq[SubArea]] = {
+    def findRange(map: SubAreaMap, index: Int): Seq[IndexedSeq[SubArea]] = {
       if (map.containsKey(index)) Seq(map.get(index))
       else Seq(map.lowerEntry(index).getValue, map.higherEntry(index).getValue)
     }
@@ -142,7 +142,7 @@ private[scala] object SubArea {
     // On the other hand, I thought maybe making Data immutable was the core
     // issue, so if there is one hand-tuned piece of code to bring this
     // within a few tens of percent of the java version, I think I'm happy.
-    @inline def allContain(area: SubArea, areas: Seq[Seq[SubArea]]): Boolean = {
+    @inline def allContain(area: SubArea, areas: Seq[IndexedSeq[SubArea]]): Boolean = {
       var i = 0
       var done = false
       var found = true
@@ -155,7 +155,7 @@ private[scala] object SubArea {
       }
       found
     }
-    @inline def anyContain(area: SubArea, areas: Seq[SubArea]): Boolean = {
+    @inline def anyContain(area: SubArea, areas: IndexedSeq[SubArea]): Boolean = {
       var i = 0
       var done = false
       var found = false

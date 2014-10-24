@@ -466,18 +466,20 @@ object Decoder {
    * @return ASCII string.
    */
   private[scala] def decodeUTF16(str: String): String = {
-    val asciiBuffer = new StringBuilder
+    val len = str.length
+    val asciiBuffer = new StringBuilder(len)
     var index = 0
-    while (index < str.length) {
+    while (index < len) {
       val char = str.charAt(index)
       if (char >= 1 && char <= 'z') asciiBuffer.append(char)
       else {
         var found = false
         var i = 0
         while (!found && i < UNICODE2ASCII.size) {
-          if (char >= UNICODE2ASCII(i).min && char <= UNICODE2ASCII(i).max) {
-            val convert = UNICODE2ASCII(i).convert
-            val convertIndex = char - UNICODE2ASCII(i).min
+          val u2a = UNICODE2ASCII(i)
+          if (char >= u2a.min && char <= u2a.max) {
+            val convert = u2a.convert
+            val convertIndex = char - u2a.min
             if (convertIndex >= 0 && convertIndex < convert.size) asciiBuffer.append(convert.charAt(convertIndex))
             else asciiBuffer.append("?")
             found = true
@@ -537,12 +539,13 @@ object Decoder {
     if (extraPostfix.isEmpty) {
       Point.fromMicroDeg(y + (dividerY / 2) * yDirection, x + dividerX4 / 8)
     } else {
+      @inline def clamp(value: Int) = if (value < 0) 0 else if (value > 29) 29 else value
       var c1 = extraPostfix.charAt(0).toInt
-      c1 = math.min(29, math.max(0, decode_chars(c1)))
+      c1 = clamp(decode_chars(c1))
       val y1 = c1 / 5
       val x1 = c1 % 5
       var c2 = if (extraPostfix.length == 2) extraPostfix.charAt(1).toInt else 72
-      c2 = math.min(29, math.max(0, decode_chars(c2)))
+      c2 = clamp(decode_chars(c2))
       val y2 = c2 / 6
       val x2 = c2 % 6
       val extraX = ((x1 * 12 + 2 * x2 + 1) * dividerX4 + 120) / 240
