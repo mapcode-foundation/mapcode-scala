@@ -72,9 +72,8 @@ object Decoder {
     Unicode2Ascii(0x10d0, 0x10ef,
       "AB?CE?D?UF?GHOJ?KLMINPQRSTVW?XYZ"), // Georgisch lowercase
     Unicode2Ascii(0x0562, 0x0586,
-      "BCDE??FGHI?J?KLM?N?U?PQ?R??STVWXYZ?OA"), // Armenian
-    // lowercase
-    Unicode2Ascii(0, 0, null))
+      "BCDE??FGHI?J?KLM?N?U?PQ?R??STVWXYZ?OA")) // Armenian lowercase
+
   private val group1 = Set(Territory.USA, Territory.CAN, Territory.AUS, Territory.BRA, Territory.CHN, Territory.RUS)
   private val group2 = Set(Territory.IND, Territory.MEX)
 
@@ -472,37 +471,29 @@ object Decoder {
    * @return ASCII string.
    */
   private[scala] def decodeUTF16(str: String): String = {
-    val asciibuf: StringBuilder = new StringBuilder
-    var index: Int = 0
+    val asciiBuffer = new StringBuilder
+    var index = 0
     while (index < str.length) {
-      if (str.charAt(index) == '.') {
-        asciibuf.append(str.charAt(index))
-      }
-      else if (str.charAt(index) >= 1 && str.charAt(index) <= 'z') {
-        asciibuf.append(str.charAt(index))
-      }
+      val char = str.charAt(index)
+      if (char >= 1 && char <= 'z') asciiBuffer.append(char)
       else {
-        var found: Boolean = false
-        var i: Int = 0
-        while (!found && UNICODE2ASCII(i).min != 0) {
-          if (str.charAt(index) >= UNICODE2ASCII(i).min && str.charAt(index) <= UNICODE2ASCII(i).max) {
-            var convert: String = UNICODE2ASCII(i).convert
-            if (convert == null) {
-              convert = "0123456789"
-            }
-            asciibuf.append(convert.charAt(str.charAt(index).asInstanceOf[Int] - UNICODE2ASCII(i).min))
+        var found = false
+        var i = 0
+        while (!found && i < UNICODE2ASCII.size) {
+          if (char >= UNICODE2ASCII(i).min && char <= UNICODE2ASCII(i).max) {
+            val convert = UNICODE2ASCII(i).convert
+            asciiBuffer.append(convert.charAt(char - UNICODE2ASCII(i).min))
             found = true
           }
-          i += 1
+          else i += 1
         }
         if (!found) {
-          asciibuf.append('?')
-          found = true
+          asciiBuffer.append('?')
         }
       }
       index += 1
     }
-    asciibuf.toString()
+    asciiBuffer.toString()
   }
 
   private def decodeTriple(str: String): Point = {
@@ -578,6 +569,9 @@ object Decoder {
 
 }
 
-case class Unicode2Ascii(min: Int, max: Int, convert: String)
+case class Unicode2Ascii(min: Int, max: Int, convert: String) {
+  require(min != 0, "a range must exist")
+  require(convert != null, "convert is not allowed to be null")
+}
 
 
