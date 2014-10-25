@@ -18,6 +18,8 @@ package com.mapcode.scala
 import com.mapcode.scala.CheckArgs.checkRange
 import org.scalatest.{FunSuite, Matchers}
 
+import scala.util.Try
+
 class ReferenceFileTest extends FunSuite with Matchers {
 
   import com.mapcode.scala.ReferenceFileTest._
@@ -51,11 +53,11 @@ class ReferenceFileTest extends FunSuite with Matchers {
 
       for (referenceMapcodeRec <- reference.mapcodes) {
         val found = results.exists { result =>
-            referenceMapcodeRec match {
-              case SimpleMapcode(code, Some(terr)) if terr == result.territory =>
-                (code.lastIndexOf('-') > 4 && code == result.mapcodePrecision2) || code == result.mapcode
-              case _ => false
-            }
+          referenceMapcodeRec match {
+            case SimpleMapcode(code, Some(terr)) if terr == result.territory =>
+              (code.lastIndexOf('-') > 4 && code == result.mapcodePrecision2) || code == result.mapcode
+            case _ => false
+          }
         }
         if (!found) {
           println(s"checkFile: Mapcode '${referenceMapcodeRec.territory} ${referenceMapcodeRec.mapcode}' " +
@@ -90,15 +92,18 @@ class ReferenceFileTest extends FunSuite with Matchers {
   }
 }
 
-
 object ReferenceFileTest extends Matchers {
   val RandomFiles = Seq("/random_1k.txt", "/random_10k.txt", "/random_100k.txt")
   val RandomHpFiles = Seq("/random_hp_1k.txt", "/random_hp_10k.txt", "/random_hp_100k.txt")
   val GridFiles = Seq("/grid_1k.txt", "/grid_10k.txt", "/grid_100k.txt")
   val GridHpFiles = Seq("/grid_hp_1k.txt", "/grid_hp_10k.txt", "/grid_hp_100k.txt")
   val BoundaryFiles = Seq("/boundaries.txt")
-  val BoundaryHpFiles = Seq("boundaries_hp.txt")
+  val BoundaryHpFiles = Seq("/boundaries_hp.txt")
   val AllFiles = Seq(RandomFiles, RandomHpFiles, GridFiles, GridHpFiles, BoundaryFiles, BoundaryHpFiles).flatten
+
+  // make sure all these files exist!
+  AllFiles.map(name => (name, getClass.getResourceAsStream(name + ".a"))).map { ni =>
+    require(ni._2 != null, s"${ni._1} not found"); ni._2}.map(i => Try(i.close()))
 
   private def mkSuffixStream: Stream[Char] = Stream.tabulate(10)(x => ('a' + x).toChar)
 
@@ -137,7 +142,6 @@ object ReferenceFileTest extends Matchers {
       }
       Reference(point, mapcodeRecs)
     }
-
   }
 }
 
