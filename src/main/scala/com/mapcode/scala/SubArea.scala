@@ -169,9 +169,16 @@ private[scala] object SubArea {
       found
     }
     val tail = allAreas.tail
-    for {
-      subArea <- allAreas(0) if allContain(subArea, tail)
-    } yield subArea
+    val buffer = new ArrayBuffer[SubArea](allAreas.size)
+    val areas = allAreas(0)
+    var idx = 0
+    val size = areas.size
+    while (idx < size) {
+      val subArea = areas(idx)
+      if (allContain(subArea, tail)) buffer += subArea
+      idx += 1
+    }
+    buffer
   }
 
   private def normaliseRange(range: Range, boundingRange: Range): Seq[Range] = {
