@@ -156,5 +156,6 @@ object Mapcode {
     type MapcodeFormat = Value
     val Invalid, Precision0, Precision1, Precision2 = Value
   }
+
 }
 

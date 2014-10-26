@@ -103,7 +103,8 @@ object ReferenceFileTest extends Matchers {
 
   // make sure all these files exist!
   AllFiles.map(name => (name, getClass.getResourceAsStream(name + ".a"))).map { ni =>
-    require(ni._2 != null, s"${ni._1} not found"); ni._2}.map(i => Try(i.close()))
+    require(ni._2 != null, s"${ni._1} not found"); ni._2
+  }.map(i => Try(i.close()))
 
   private def mkSuffixStream: Stream[Char] = Stream.tabulate(10)(x => ('a' + x).toChar)
 
@@ -143,5 +144,6 @@ object ReferenceFileTest extends Matchers {
       Reference(point, mapcodeRecs)
     }
   }
+
 }
 

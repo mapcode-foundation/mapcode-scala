@@ -15,9 +15,10 @@
  */
 package com.mapcode.scala
 
+import com.mapcode.scala.CheckArgs.{checkNonnull, checkRange}
 import com.mapcode.scala.Common.{countCityCoordinatesForCountry, getFirstNamelessRecord, nc, xDivider, xSide, ySide}
+
 import scala.collection.mutable.ArrayBuffer
-import CheckArgs.{checkNonnull, checkRange}
 
 private[scala] object Encoder {
   private final val encode_chars: Array[Char] =
@@ -95,7 +96,7 @@ private[scala] object Encoder {
         }
       }
     }
-   results    // may be empty if coords not within territory
+    results // may be empty if coords not within territory
   }
 
   private def encodeGrid(m: Int, point: Point, mapcoderData: Data): Option[String] = {
