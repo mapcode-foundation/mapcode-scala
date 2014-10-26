@@ -19,32 +19,34 @@ package com.mapcode.scala
  * This class defines a single mapcode encoding result, including the mapcode itself and the
  * territory definition.
  *
- * Note that the constructor will throw an {@link IllegalArgumentException} if the syntax of the mapcode
+ * Note that the constructor will throw an `IllegalArgumentException` if the syntax of the mapcode
  * is not correct. The mapcode is not checked for validity, other than its syntax.
  *
- * @param mapcodePrecision0 the Mapcode string (without territory information) with standard precision.
- *                          The returned mapcode does not include the '-' separator and additional digits.
- *                          The precision is approximately 5 meters. The precision is defined as the maximum distance
- *                          to the (latitude, longitude) pair that encoded to this mapcode, which means the mapcode
- *                          defines an area of approximately 10 x 10 meters (100 m2).
- * @param mapcodePrecision1 Get the medium-precision mapcode string (without territory information).
- *                          The returned mapcode includes the '-' separator and 1 additional digit, if available.
- *                          If a medium precision code is not available, the regular mapcode is returned.
- *                          The returned precision is approximately 1 meter. The precision is defined as the maximum
- *                          distance to the (latitude, longitude) pair that encoded to this mapcode, which means the
- *                          mapcode defines an area of approximately 2 x 2 meters (4 m2).
- * @param mapcodePrecision2 the high-precision mapcode string (without territory information).
- *                          The returned mapcode includes the '-' separator and 2 additional digit2, if available.
- *                          If a high precision code is not available, the regular mapcode is returned.
- *                          The returned precision is approximately 16 centimeters. The precision is defined as the
- *                          maximum distance to the (latitude, longitude) pair that encoded to this mapcode, which
- *                          means the mapcode defines an area of approximately 32 x 32 centimeters (0.1 m2).
+ * @param mapcodePrecision0  The Mapcode string (without territory information) with standard precision.
+ *                           The returned mapcode does not include the '-' separator and additional digits.
+ *                           The precision is approximately 5 meters. The precision is defined as the maximum distance
+ *                           to the (latitude, longitude) pair that encoded to this mapcode, which means the mapcode
+ *                           defines an area of approximately 10 x 10 meters (100 m2).
+ * @param mapcodePrecision1  The medium-precision mapcode string (without territory information).
+ *                           The returned mapcode includes the '-' separator and 1 additional digit, if available.
+ *                           If a medium precision code is not available, the regular mapcode is returned.
+ *                           The returned precision is approximately 1 meter. The precision is defined as the maximum
+ *                           distance to the (latitude, longitude) pair that encoded to this mapcode, which means the
+ *                           mapcode defines an area of approximately 2 x 2 meters (4 m2).
+ * @param mapcodePrecision2  The high-precision mapcode string (without territory information).
+ *                           The returned mapcode includes the '-' separator and 2 additional digits, if available.
+ *                           If a high precision code is not available, the regular mapcode is returned.
+ *                           The returned precision is approximately 16 centimeters. The precision is defined as the
+ *                           maximum distance to the (latitude, longitude) pair that encoded to this mapcode, which
+ *                           means the mapcode defines an area of approximately 32 x 32 centimeters (0.1 m2).
+ * @param territory          The territory in which this mapcode can be found, typically either a country or a state or
+ *                           province.
  */
 
-case class Mapcode(mapcodePrecision0: String,
-                   mapcodePrecision1: String,
-                   mapcodePrecision2: String,
-                   territory: Territory.Territory) {
+case class Mapcode private[scala](mapcodePrecision0: String,
+                                  mapcodePrecision1: String,
+                                  mapcodePrecision2: String,
+                                  territory: Territory.Territory) {
 
   def mapcode: String = mapcodePrecision0
 
@@ -92,32 +94,22 @@ object Mapcode {
    * These patterns and matchers are used internally in this module to match mapcodes. They are
    * provided as statics to only compile these patterns once.
    */
-  val REGEX_MAPCODE_FORMAT1 = "^[\\p{Alpha}\\p{Digit}]{2,5}+"
-  val REGEX_MAPCODE_FORMAT2 = "[.][\\p{Alpha}\\p{Digit}]{2,5}+"
-  val REGEX_MAPCODE_PRECISION = "[-][\\p{Alpha}\\p{Digit}&&[^zZ]]{1,2}+"
+  val PrecisionRx = """[-][\p{Alpha}\p{Digit}&&[^zZ]]{1,2}+""".r
 
   /**
    * This patterns/regular expressions is used for checking mapcode format strings.
    * They've been made pulkic to allow others to use the correct regular expressions as well.
    */
-  val REGEX_MAPCODE_FORMAT: String = s"$REGEX_MAPCODE_FORMAT1$REGEX_MAPCODE_FORMAT2($REGEX_MAPCODE_PRECISION)?$$"
-  private val PATTERN_MAPCODE_FORMAT = REGEX_MAPCODE_FORMAT.r
-  private val PATTERN_MAPCODE_PRECISION = REGEX_MAPCODE_PRECISION.r
+  val FormatRx = s"""^[\\p{Alpha}\\p{Digit}]{2,5}+[.][\\p{Alpha}\\p{Digit}]{2,5}+($PrecisionRx)?$$""".r
 
-  def apply(mapcode: String, territory: Territory.Territory): Mapcode = {
+  private[scala] def apply(mapcode: String, territory: Territory.Territory): Mapcode = {
     require(isValidMapcodeFormat(mapcode),
-      s"$mapcode is not correctly formatted; the regex for the syntax is $REGEX_MAPCODE_FORMAT")
-    val mapcodePrecision2 = mapcode
-    val (mapcodePrecision0, mapcodePrecision1) = if (mapcode.contains("-")) {
-      (mapcode.substring(0, mapcode.length - 3), mapcode.substring(0, mapcode.length - 1))
-    }
-    else {
-      (mapcode, mapcode)
-    }
-    new Mapcode(mapcodePrecision0 = mapcodePrecision0,
-      mapcodePrecision1 = mapcodePrecision1,
-      mapcodePrecision2 = mapcodePrecision2,
-      territory = territory)
+      s"$mapcode is not correctly formatted; the regex for the syntax is $FormatRx")
+    val p2 = mapcode
+    val (p0, p1) =
+      if (mapcode.contains("-")) (mapcode.substring(0, mapcode.length - 3), mapcode.substring(0, mapcode.length - 1))
+      else (p2, p2)
+    new Mapcode(mapcodePrecision0 = p0, mapcodePrecision1 = p1, mapcodePrecision2 = p2, territory = territory)
   }
 
   /**
@@ -127,35 +119,25 @@ object Mapcode {
    * @return True if the mapcode format, the syntax, is correct. This does not mean the mapcode is actually a valid
    *         mapcode representing a location on Earth.
    */
-  def isValidMapcodeFormat(mapcode: String): Boolean = {
-    getMapcodeFormatType(mapcode) != MapcodeFormatType.MAPCODE_TYPE_INVALID
-  }
+  def isValidMapcodeFormat(mapcode: String): Boolean = getMapcodeFormatType(mapcode) != MapcodeFormat.Invalid
 
   /**
    * This method return the mapcode type, given a mapcode string. If the mapcode string has an invalid
-   * format, {@link MapcodeFormatType#MAPCODE_TYPE_INVALID} is returned. If another value is returned,
+   * format, `MapcodeFormatType#Invalid` is returned. If another value is returned,
    * the precision of the mapcode is given.
    *
    * Note that this method only checks the syntactic validity of the mapcode, the string format. It does not
    * check if the mapcode is really a valid mapcode representing a position on Earth.
    *
    * @param mapcode Mapcode string.
-   * @return Type of mapcode format, or { @link MapcodeFormatType#MAPCODE_TYPE_INVALID} if not valid.
+   * @return Type of mapcode format, or { @link MapcodeFormatType#Invalid} if not valid.
    */
-  def getMapcodeFormatType(mapcode: String): MapcodeFormatType.MapcodeFormatType = {
-    val decodedMapcode: String = convertToAscii(mapcode)
-    if (!PATTERN_MAPCODE_FORMAT.pattern.matcher(decodedMapcode).matches) {
-      MapcodeFormatType.MAPCODE_TYPE_INVALID
-    } else {
-      val matcherMapcodePrecision = PATTERN_MAPCODE_PRECISION.pattern.matcher(decodedMapcode)
-      if (!matcherMapcodePrecision.find) {
-        MapcodeFormatType.MAPCODE_TYPE_PRECISION_0
-      } else {
-        val length = matcherMapcodePrecision.end - matcherMapcodePrecision.start
-        assert((2 <= length) && (length <= 3))
-        if (length == 2) MapcodeFormatType.MAPCODE_TYPE_PRECISION_1
-        else MapcodeFormatType.MAPCODE_TYPE_PRECISION_2
-      }
+  def getMapcodeFormatType(mapcode: String): MapcodeFormat.MapcodeFormat = {
+    convertToAscii(mapcode) match {
+      case FormatRx(precision) if precision == null => MapcodeFormat.Precision0
+      case FormatRx(precision) if precision.size == 2 => MapcodeFormat.Precision1
+      case FormatRx(precision) if precision.size == 3 => MapcodeFormat.Precision2
+      case _ => MapcodeFormat.Invalid
     }
   }
 
@@ -170,10 +152,9 @@ object Mapcode {
   /**
    * This enum describes the types of mapcodes available.
    */
-  object MapcodeFormatType extends Enumeration {
-    type MapcodeFormatType = Value
-    val MAPCODE_TYPE_INVALID, MAPCODE_TYPE_PRECISION_0, MAPCODE_TYPE_PRECISION_1, MAPCODE_TYPE_PRECISION_2 = Value
+  object MapcodeFormat extends Enumeration {
+    type MapcodeFormat = Value
+    val Invalid, Precision0, Precision1, Precision2 = Value
   }
-
 }
 

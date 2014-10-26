@@ -80,11 +80,11 @@ trait TerritoryOperations extends Enumeration {
     }
   }
 
-  case class Territory(territoryCode: Int,
-                       fullName: String,
-                       parentTerritory: Option[Territory] = None,
-                       aliases: Seq[String] = Seq.empty,
-                       fullNameAliases: Seq[String] = Seq.empty) extends Val {
+  case class Territory private[scala](territoryCode: Int,
+                                      fullName: String,
+                                      parentTerritory: Option[Territory] = None,
+                                      aliases: Seq[String] = Seq.empty,
+                                      fullNameAliases: Seq[String] = Seq.empty) extends Val {
 
     /**
      * Return the territory name, given a specific territory name format.

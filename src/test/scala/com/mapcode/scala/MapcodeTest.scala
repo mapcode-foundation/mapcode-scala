@@ -20,58 +20,58 @@ import org.scalatest.{FunSuite, Matchers}
 
 class MapcodeTest extends FunSuite with Matchers {
   test("checkValidMapcodeFormats") {
-    Mapcode.isValidMapcodeFormat("A1.B1") should be(true)
-    Mapcode.isValidMapcodeFormat("a1.B1") should be(true)
-    Mapcode.isValidMapcodeFormat("00.01") should be(true)
-    Mapcode.isValidMapcodeFormat("AAA.01") should be(true)
-    Mapcode.isValidMapcodeFormat("AAA.BBB") should be(true)
-    Mapcode.isValidMapcodeFormat("AAAA.BBB") should be(true)
-    Mapcode.isValidMapcodeFormat("AAAA.BBBB") should be(true)
-    Mapcode.isValidMapcodeFormat("AAAAA.BBBB") should be(true)
-    Mapcode.isValidMapcodeFormat("AAAAA.BBBBB") should be(true)
-    Mapcode.isValidMapcodeFormat("AA.AA-0") should be(true)
-    Mapcode.isValidMapcodeFormat("AA.AA-01") should be(true)
-    Mapcode.isValidMapcodeFormat("AA.AA-A") should be(true)
-    Mapcode.isValidMapcodeFormat("AA.AA-AA") should be(true)
-    Mapcode.isValidMapcodeFormat("AA.AA-Y") should be(true)
-    Mapcode.isValidMapcodeFormat("AA.AA-1Y") should be(true)
+    Mapcode.isValidMapcodeFormat("A1.B1") shouldBe true
+    Mapcode.isValidMapcodeFormat("a1.B1") shouldBe true
+    Mapcode.isValidMapcodeFormat("00.01") shouldBe true
+    Mapcode.isValidMapcodeFormat("AAA.01") shouldBe true
+    Mapcode.isValidMapcodeFormat("AAA.BBB") shouldBe true
+    Mapcode.isValidMapcodeFormat("AAAA.BBB") shouldBe true
+    Mapcode.isValidMapcodeFormat("AAAA.BBBB") shouldBe true
+    Mapcode.isValidMapcodeFormat("AAAAA.BBBB") shouldBe true
+    Mapcode.isValidMapcodeFormat("AAAAA.BBBBB") shouldBe true
+    Mapcode.isValidMapcodeFormat("AA.AA-0") shouldBe true
+    Mapcode.isValidMapcodeFormat("AA.AA-01") shouldBe true
+    Mapcode.isValidMapcodeFormat("AA.AA-A") shouldBe true
+    Mapcode.isValidMapcodeFormat("AA.AA-AA") shouldBe true
+    Mapcode.isValidMapcodeFormat("AA.AA-Y") shouldBe true
+    Mapcode.isValidMapcodeFormat("AA.AA-1Y") shouldBe true
   }
 
   test("checkInvalidMapcodeFormats") {
-    Mapcode.isValidMapcodeFormat("A") should be(false)
-    Mapcode.isValidMapcodeFormat("AB") should be(false)
-    Mapcode.isValidMapcodeFormat("AB.") should be(false)
-    Mapcode.isValidMapcodeFormat(".A") should be(false)
-    Mapcode.isValidMapcodeFormat(".AB") should be(false)
-    Mapcode.isValidMapcodeFormat("A.B") should be(false)
-    Mapcode.isValidMapcodeFormat("a.B") should be(false)
-    Mapcode.isValidMapcodeFormat("0.1") should be(false)
-    Mapcode.isValidMapcodeFormat("0.1") should be(false)
-    Mapcode.isValidMapcodeFormat("00.1") should be(false)
-    Mapcode.isValidMapcodeFormat("0.01") should be(false)
-    Mapcode.isValidMapcodeFormat("00.01.") should be(false)
-    Mapcode.isValidMapcodeFormat("00.01.0") should be(false)
-    Mapcode.isValidMapcodeFormat("00.01.00") should be(false)
-    Mapcode.isValidMapcodeFormat("00.01-") should be(false)
-    Mapcode.isValidMapcodeFormat("00.01-") should be(false)
-    Mapcode.isValidMapcodeFormat("AAAAAA.BBBBB") should be(false)
-    Mapcode.isValidMapcodeFormat("AAAAA.BBBBBB") should be(false)
-    Mapcode.isValidMapcodeFormat("AA.AA-012") should be(false)
-    Mapcode.isValidMapcodeFormat("AA.AA-Z") should be(false)
-    Mapcode.isValidMapcodeFormat("AA.AA-1Z") should be(false)
-    Mapcode.isValidMapcodeFormat("A.AAA") should be(false)
-    Mapcode.isValidMapcodeFormat("AAA.A") should be(false)
-    Mapcode.isValidMapcodeFormat("A.AAA-1") should be(false)
-    Mapcode.isValidMapcodeFormat("AAA.A-1") should be(false)
-    Mapcode.isValidMapcodeFormat("A.AAA-12") should be(false)
-    Mapcode.isValidMapcodeFormat("AAA.A-12") should be(false)
+    Mapcode.isValidMapcodeFormat("A") shouldBe false
+    Mapcode.isValidMapcodeFormat("AB") shouldBe false
+    Mapcode.isValidMapcodeFormat("AB.") shouldBe false
+    Mapcode.isValidMapcodeFormat(".A") shouldBe false
+    Mapcode.isValidMapcodeFormat(".AB") shouldBe false
+    Mapcode.isValidMapcodeFormat("A.B") shouldBe false
+    Mapcode.isValidMapcodeFormat("a.B") shouldBe false
+    Mapcode.isValidMapcodeFormat("0.1") shouldBe false
+    Mapcode.isValidMapcodeFormat("0.1") shouldBe false
+    Mapcode.isValidMapcodeFormat("00.1") shouldBe false
+    Mapcode.isValidMapcodeFormat("0.01") shouldBe false
+    Mapcode.isValidMapcodeFormat("00.01.") shouldBe false
+    Mapcode.isValidMapcodeFormat("00.01.0") shouldBe false
+    Mapcode.isValidMapcodeFormat("00.01.00") shouldBe false
+    Mapcode.isValidMapcodeFormat("00.01-") shouldBe false
+    Mapcode.isValidMapcodeFormat("00.01-") shouldBe false
+    Mapcode.isValidMapcodeFormat("AAAAAA.BBBBB") shouldBe false
+    Mapcode.isValidMapcodeFormat("AAAAA.BBBBBB") shouldBe false
+    Mapcode.isValidMapcodeFormat("AA.AA-012") shouldBe false
+    Mapcode.isValidMapcodeFormat("AA.AA-Z") shouldBe false
+    Mapcode.isValidMapcodeFormat("AA.AA-1Z") shouldBe false
+    Mapcode.isValidMapcodeFormat("A.AAA") shouldBe false
+    Mapcode.isValidMapcodeFormat("AAA.A") shouldBe false
+    Mapcode.isValidMapcodeFormat("A.AAA-1") shouldBe false
+    Mapcode.isValidMapcodeFormat("AAA.A-1") shouldBe false
+    Mapcode.isValidMapcodeFormat("A.AAA-12") shouldBe false
+    Mapcode.isValidMapcodeFormat("AAA.A-12") shouldBe false
   }
 
   test("checkMapcodeFormatType") {
-    Mapcode.MapcodeFormatType.MAPCODE_TYPE_INVALID should be(Mapcode.getMapcodeFormatType("ABC"))
-    Mapcode.MapcodeFormatType.MAPCODE_TYPE_PRECISION_0 should be(Mapcode.getMapcodeFormatType("AA.BB"))
-    Mapcode.MapcodeFormatType.MAPCODE_TYPE_PRECISION_1 should be(Mapcode.getMapcodeFormatType("AA.BB-1"))
-    Mapcode.MapcodeFormatType.MAPCODE_TYPE_PRECISION_2 should be(Mapcode.getMapcodeFormatType("AA.BB-12"))
+    Mapcode.getMapcodeFormatType("ABC") should be(Mapcode.MapcodeFormat.Invalid)
+    Mapcode.getMapcodeFormatType("AA.BB") should be(Mapcode.MapcodeFormat.Precision0)
+    Mapcode.getMapcodeFormatType("AA.BB-1") should be(Mapcode.MapcodeFormat.Precision1)
+    Mapcode.getMapcodeFormatType("AA.BB-12") should be(Mapcode.MapcodeFormat.Precision2)
   }
 
   test("checkConvertToAscii") {

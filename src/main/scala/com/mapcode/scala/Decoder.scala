@@ -15,10 +15,11 @@
  */
 package com.mapcode.scala
 
+/** Thrown when a mapcode is syntactically correct, but does not map to a coordinate. */
 case class UnknownMapcodeException(message: String) extends Exception(message)
 
 
-object Decoder {
+private[scala] object Decoder {
   private final val CCODE_EARTH: Int = 540
   private final val decode_chars: Array[Byte] = Array(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,

@@ -15,19 +15,15 @@
  */
 package com.mapcode.scala
 
-import com.mapcode.scala.CheckArgs.{checkNonnull, checkRange, verify}
+import com.mapcode.scala.CheckArgs.verify
 
 /**
- * ----------------------------------------------------------------------------------------------
- * Mapcode public interface.
- * ----------------------------------------------------------------------------------------------
- *
  * This class is the external Scala interface for encoding and decoding mapcodes.
  */
 object MapcodeCodec {
   /**
    * Encode a lat/lon pair to a mapcode with territory information. This produces a non-empty list of mapcode,
-   * with at the very least 1 mapcodes for the lat/lon, which is the "International" mapcode.
+   * with at least 1 mapcode for the lat/lon, which is the "International" mapcode.
    *
    * The returned result list will always contain at least 1 mapcode, because every lat/lon pair can be encoded.
    *
@@ -35,7 +31,7 @@ object MapcodeCodec {
    * local mapcode). The last result contains the "International" or world-wide mapcode, which is always
    * unambiguous, even when used without a territory specification.
    *
-   * The international code can be obtained from the list by using: "results.get(results.size() - 1)".
+   * The international code can be obtained from call like `encode(lat, lon).last`.
    *
    * @param latDeg Latitude, accepted range: -90..90.
    * @param lonDeg Longitude, accepted range: -180..180.
@@ -50,8 +46,8 @@ object MapcodeCodec {
    * Encode a lat/lon pair to its shortest mapcode without territory information. For a valid lat/lon pair, this will
    * always yield a mapcode.
    *
-   * @param latDeg Latitude, accepted range: -90..90.
-   * @param lonDeg Longitude, accepted range: -180..180.
+   * @param latDeg Latitude in degrees, accepted range: -90..90.
+   * @param lonDeg Longitude in degrees, accepted range: -180..180.
    * @return Shortest mapcode (always exists), see { @link Mapcode}.
    * @throws IllegalArgumentException Thrown if latitude or longitude are out of range.
    */
@@ -122,14 +118,13 @@ object MapcodeCodec {
    * Decode a mapcode to a Point. The decoding process may fail for local mapcodes,
    * because no territory context is supplied (world-wide).
    *
-   * The accepted format is:
-   * <mapcode>
-   * <territory-code> <mapcode>
+   * The accepted format is:<br><br>
+   * `<mapcode><br>
+   * <territory-code> <mapcode>`
    *
    * @param mapcode Mapcode.
    * @return Point corresponding to mapcode.
-   * @throws UnknownMapcodeException  Thrown if the mapcode has the correct synaxt,
-   *                                  but cannot be decoded into a point.
+   * @throws UnknownMapcodeException  Thrown if the mapcode has the correct syntax, but cannot be decoded into a point.
    * @throws IllegalArgumentException Thrown if arguments are null, or if the syntax of the mapcode is incorrect.
    */
   def decode(mapcode: String): Point = {
@@ -147,7 +142,8 @@ object MapcodeCodec {
       territory = Some(Territory.AAA)
     }
     if (!Mapcode.isValidMapcodeFormat(mapcodeTrimmed)) {
-      throw new IllegalArgumentException(mapcode + " is not a correctly formatted mapcode; " + "the regular expression for the mapcode syntax is: " + Mapcode.REGEX_MAPCODE_FORMAT)
+      throw new IllegalArgumentException(
+        s"$mapcode is not a correctly formatted mapcode; must match regex: ${Mapcode.FormatRx}")
     }
     decode(mapcodeTrimmed, territory.get)
   }
@@ -167,7 +163,7 @@ object MapcodeCodec {
   def decode(mapcode: String, territoryContext: Territory.Territory): Point = {
     val mapcodeTrimmed: String = mapcode.trim
     require(Mapcode.isValidMapcodeFormat(mapcodeTrimmed),
-      mapcode + " is not a correctly formatted mapcode; " + "the regular expression for the mapcode syntax is: " + Mapcode.REGEX_MAPCODE_FORMAT)
+      s"$mapcode is not a correctly formatted mapcode; must match regex: ${Mapcode.FormatRx}")
     val point: Point = Decoder.decode(mapcodeTrimmed, territoryContext)
     if (!point.isDefined) {
       throw new UnknownMapcodeException("Unknown Mapcode: " + mapcodeTrimmed + ", territoryContext=" + territoryContext)

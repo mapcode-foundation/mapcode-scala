@@ -26,12 +26,12 @@ class PointTest extends FunSuite with Matchers with GeneratorDrivenPropertyCheck
 
   test("invalidPoint") {
     val point = Point.undefined
-    point.isDefined should be(false)
+    point.isDefined shouldBe false
   }
 
   test("validPoint") {
     val point = Point.fromMicroDeg(2, 1)
-    point.isDefined should be(true)
+    point.isDefined shouldBe true
   }
 
   test("pointStored") {

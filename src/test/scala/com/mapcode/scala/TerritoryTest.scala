@@ -30,10 +30,10 @@ class TerritoryTest extends FunSuite with Matchers {
   }
 
   test("states") {
-    Territory.USA.hasStates should be(true)
-    Territory.USA.isState should be(false)
-    Territory.US_MT.isState should be(true)
-    Territory.US_MT.hasStates should be(false)
+    Territory.USA shouldBe 'hasStates
+    Territory.USA should not be 'isState
+    Territory.US_MT shouldBe 'isState
+    Territory.US_MT should not be 'hasStates
   }
 
   test("fromTerritoryCode") {
@@ -84,7 +84,7 @@ class TerritoryTest extends FunSuite with Matchers {
   }
 
   test("disambiguateMNTest1") {
-    val Some(territory1) = Territory.fromString("IND-MN");
+    val Some(territory1) = Territory.fromString("IND-MN")
     val Some(territory2) = Territory.fromString("MN", Some(ParentTerritory.IND))
     val Some(territory3) = Territory.fromString("MN", Some(ParentTerritory.USA))
     territory1 should be(territory2)

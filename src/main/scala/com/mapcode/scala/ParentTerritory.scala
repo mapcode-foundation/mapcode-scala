@@ -17,7 +17,8 @@
 package com.mapcode.scala
 
 /**
- * This class defines "parent territories" for territories that have multiple territory codes.
+ * This class defines "parent territories" for territories that have multiple territory codes. In other words,
+ * Countries that have states or provinces that are fairly first-class, e.g. USA.
  */
 object ParentTerritory {
   // this is a Seq instead of a Set because Set is invariant and we need covariance

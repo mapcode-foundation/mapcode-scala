@@ -19,7 +19,7 @@ import com.mapcode.scala.Common.{countCityCoordinatesForCountry, getFirstNameles
 import scala.collection.mutable.ArrayBuffer
 import CheckArgs.{checkNonnull, checkRange}
 
-object Encoder {
+private[scala] object Encoder {
   private final val encode_chars: Array[Char] =
     Array('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'B', 'C', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N',
       'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'X', 'Y', 'Z')

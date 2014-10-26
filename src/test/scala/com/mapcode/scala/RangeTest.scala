@@ -12,9 +12,9 @@ class RangeTest extends FunSuite with Matchers with GeneratorDrivenPropertyCheck
       (a: Int, b: Int, c: Int, d: Int) =>
         whenever(a != b && a != c && a != d && b != c && b != d && c != d) {
           val sorted = Seq(a, b, c, d).sorted
-          Range(sorted(0), sorted(1)).containsRange(Range(sorted(2), sorted(3))) should be(false)
-          Range(sorted(0), sorted(2)).containsRange(Range(sorted(1), sorted(3))) should be(false)
-          Range(sorted(0), sorted(3)).containsRange(Range(sorted(1), sorted(2))) should be(true)
+          Range(sorted(0), sorted(1)).containsRange(Range(sorted(2), sorted(3))) shouldBe false
+          Range(sorted(0), sorted(2)).containsRange(Range(sorted(1), sorted(3))) shouldBe false
+          Range(sorted(0), sorted(3)).containsRange(Range(sorted(1), sorted(2))) shouldBe true
         }
     }
   }
@@ -24,9 +24,9 @@ class RangeTest extends FunSuite with Matchers with GeneratorDrivenPropertyCheck
       (a: Int, b: Int, c: Int, d: Int) =>
         whenever(a != b && a != c && a != d && b != c && b != d && c != d) {
           val sorted = Seq(a, b, c, d).sorted
-          Range(sorted(0), sorted(1)).intersects(Range(sorted(2), sorted(3))) should be(false)
-          Range(sorted(0), sorted(2)).intersects(Range(sorted(1), sorted(3))) should be(true)
-          Range(sorted(0), sorted(3)).intersects(Range(sorted(1), sorted(2))) should be(true)
+          Range(sorted(0), sorted(1)).intersects(Range(sorted(2), sorted(3))) shouldBe false
+          Range(sorted(0), sorted(2)).intersects(Range(sorted(1), sorted(3))) shouldBe true
+          Range(sorted(0), sorted(3)).intersects(Range(sorted(1), sorted(2))) shouldBe true
         }
     }
   }
