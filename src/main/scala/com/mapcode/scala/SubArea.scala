@@ -70,11 +70,11 @@ private[scala] object SubArea {
   // scala doesn't have a good mutable TreeMap that has the range features
   // we need, so we just use it with some sugar to avoid having to fill
   // it eagerly
-  class SubAreaMap extends util.TreeMap[Int, ArrayBuffer[SubArea]] {
-    def get(key: Int): ArrayBuffer[SubArea] = {
+  class SubAreaMap extends util.TreeMap[Int, Array[SubArea]] {
+    def get(key: Int): Array[SubArea] = {
       val existing = super.get(key)
       if (existing == null) {
-        val buf = ArrayBuffer[SubArea]()
+        val buf = Array[SubArea]()
         super.put(key.asInstanceOf[Int], buf)
         buf
       } else existing
@@ -83,7 +83,7 @@ private[scala] object SubArea {
     def containsKey(key: Int) = super.get(key) != null
   }
 
-  private val (lonMap: SubAreaMap, latMap: SubAreaMap, subAreas: Seq[SubArea]) = {
+  private val (lonMap: SubAreaMap, latMap: SubAreaMap, subAreas: Array[SubArea]) = {
     import com.mapcode.scala.Territory.territories
     val latMap = new SubAreaMap
     val lonMap = new SubAreaMap
@@ -115,21 +115,21 @@ private[scala] object SubArea {
       for {
         lonRange <- subArea.boundedLonRange
         key <- lonMap.subMap(lonRange.min, lonRange.max + 1).keySet().asScala
-      } lonMap.get(key) += subArea
+      } lonMap.put(key, lonMap.get(key) :+ subArea)
       for {
         latRange <- subArea.boundedLatRange
         key <- latMap.subMap(latRange.min, latRange.max + 1).keySet().asScala
-      } latMap.get(key) += subArea
+      } latMap.put(key, latMap.get(key) :+ subArea)
     }
 
-    (lonMap, latMap, subs.toIndexedSeq)
+    (lonMap, latMap, subs.toArray)
   }
 
   def getArea(i: Int): Option[SubArea] = Try(subAreas(i)).toOption
 
   def getAreasForPoint(point: Point): Seq[SubArea] = {
 
-    def findRange(map: SubAreaMap, index: Int): Seq[IndexedSeq[SubArea]] = {
+    def findRange(map: SubAreaMap, index: Int): Seq[Array[SubArea]] = {
       if (map.containsKey(index)) Seq(map.get(index))
       else Seq(map.lowerEntry(index).getValue, map.higherEntry(index).getValue)
     }
@@ -142,7 +142,7 @@ private[scala] object SubArea {
     // On the other hand, I thought maybe making Data immutable was the core
     // issue, so if there is one hand-tuned piece of code to bring this
     // within a few tens of percent of the java version, I think I'm happy.
-    @inline def allContain(area: SubArea, areas: Seq[IndexedSeq[SubArea]]): Boolean = {
+    @inline def allContain(area: SubArea, areas: Seq[Array[SubArea]]): Boolean = {
       var i = 0
       var done = false
       var found = true
@@ -155,7 +155,7 @@ private[scala] object SubArea {
       }
       found
     }
-    @inline def anyContain(area: SubArea, areas: IndexedSeq[SubArea]): Boolean = {
+    @inline def anyContain(area: SubArea, areas: Array[SubArea]): Boolean = {
       var i = 0
       var done = false
       var found = false
