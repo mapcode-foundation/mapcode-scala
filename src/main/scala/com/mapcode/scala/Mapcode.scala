@@ -94,15 +94,16 @@ object Mapcode {
    * These patterns and matchers are used internally in this module to match mapcodes. They are
    * provided as statics to only compile these patterns once.
    */
-  val PrecisionRx = """[-][\p{Alpha}\p{Digit}&&[^zZ]]{1,2}+""".r
+  private[scala] val PrecisionRx = """[-][\p{Alpha}\p{Digit}&&[^zZ]]{1,2}+""".r
 
   /**
    * This patterns/regular expressions is used for checking mapcode format strings.
-   * They've been made pulkic to allow others to use the correct regular expressions as well.
+   * It's been made public to allow others to use the correct regular expressions as well.
    */
   val FormatRx = s"""^[\\p{Alpha}\\p{Digit}]{2,5}+[.][\\p{Alpha}\\p{Digit}]{2,5}+($PrecisionRx)?$$""".r
 
   private[scala] def apply(mapcode: String, territory: Territory.Territory): Mapcode = {
+    // todo -- this code is wrong if a p1 mapcode is passed in here; only p0 or p2
     require(isValidMapcodeFormat(mapcode),
       s"$mapcode is not correctly formatted; the regex for the syntax is $FormatRx")
     val p2 = mapcode
