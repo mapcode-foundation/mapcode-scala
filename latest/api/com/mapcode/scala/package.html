@@ -1,0 +1,280 @@
+<!DOCTYPE html >
+<html>
+        <head>
+          <title>scala - com.mapcode.scala</title>
+          <meta name="description" content="scala - com.mapcode.scala" />
+          <meta name="keywords" content="scala com.mapcode.scala" />
+          <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+          
+      <link href="../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
+      <link href="../../../lib/diagrams.css" media="screen" type="text/css" rel="stylesheet" id="diagrams-css" />
+      <script type="text/javascript" src="../../../lib/jquery.js" id="jquery-js"></script>
+      <script type="text/javascript" src="../../../lib/jquery-ui.js"></script>
+      <script type="text/javascript" src="../../../lib/template.js"></script>
+      <script type="text/javascript" src="../../../lib/tools.tooltip.js"></script>
+      
+      <script type="text/javascript">
+         if(top === self) {
+            var url = '../../../index.html';
+            var hash = 'com.mapcode.scala.package';
+            var anchor = window.location.hash;
+            var anchor_opt = '';
+            if (anchor.length >= 1)
+              anchor_opt = '@' + anchor.substring(1);
+            window.location.href = url + '#' + hash + anchor_opt;
+         }
+   	  </script>
+    
+        </head>
+        <body class="value">
+      <div id="definition">
+        <img src="../../../lib/package_big.png" />
+        <p id="owner"><a href="../../package.html" class="extype" name="com">com</a>.<a href="../package.html" class="extype" name="com.mapcode">mapcode</a></p>
+        <h1>scala</h1> <span class="permalink">
+      <a href="../../../index.html#com.mapcode.scala.package" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" />
+      </a>
+    </span>
+      </div>
+
+      <h4 id="signature" class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <span class="name">scala</span>
+      </span>
+      </h4>
+      
+          <div id="comment" class="fullcommenttop"></div>
+        
+
+      <div id="mbrsel">
+        <div id="textfilter"><span class="pre"></span><span class="input"><input id="mbrsel-input" type="text" accesskey="/" /></span><span class="post"></span></div>
+        
+        
+        <div id="visbl">
+            <span class="filtertype">Visibility</span>
+            <ol><li class="public in"><span>Public</span></li><li class="all out"><span>All</span></li></ol>
+          </div>
+      </div>
+
+      <div id="template">
+        <div id="allMembers">
+        
+
+        <div id="types" class="types members">
+              <h3>Type Members</h3>
+              <ol><li name="com.mapcode.scala.Mapcode" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="MapcodeextendsProductwithSerializable"></a>
+      <a id="Mapcode:Mapcode"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="Mapcode.html"><span class="name">Mapcode</span></a><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#com.mapcode.scala.package@MapcodeextendsProductwithSerializable" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">This class defines a single mapcode encoding result, including the mapcode itself and the
+territory definition.</p><div class="fullcomment"><div class="comment cmt"><p>This class defines a single mapcode encoding result, including the mapcode itself and the
+territory definition.</p><p>Note that the constructor will throw an <code>IllegalArgumentException</code> if the syntax of the mapcode
+is not correct. The mapcode is not checked for validity, other than its syntax.
+</p></div></div>
+    </li><li name="com.mapcode.scala.Point" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="PointextendsProductwithSerializable"></a>
+      <a id="Point:Point"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="Point.html"><span class="name">Point</span></a><span class="params">(<span name="latDeg">latDeg: <span class="extype" name="scala.Double">Double</span></span>, <span name="lonDeg">lonDeg: <span class="extype" name="scala.Double">Double</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#com.mapcode.scala.package@PointextendsProductwithSerializable" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" />
+      </a>
+    </span>
+      
+    </li><li name="com.mapcode.scala.TerritoryOperations" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="TerritoryOperationsextendsEnumeration"></a>
+      <a id="TerritoryOperations:TerritoryOperations"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="TerritoryOperations.html"><span class="name">TerritoryOperations</span></a><span class="result"> extends <span class="extype" name="scala.Enumeration">Enumeration</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#com.mapcode.scala.package@TerritoryOperationsextendsEnumeration" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" />
+      </a>
+    </span>
+      
+    </li><li name="com.mapcode.scala.Unicode2Ascii" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Unicode2AsciiextendsProductwithSerializable"></a>
+      <a id="Unicode2Ascii:Unicode2Ascii"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="Unicode2Ascii.html"><span class="name">Unicode2Ascii</span></a><span class="params">(<span name="min">min: <span class="extype" name="scala.Int">Int</span></span>, <span name="max">max: <span class="extype" name="scala.Int">Int</span></span>, <span name="convert">convert: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#com.mapcode.scala.package@Unicode2AsciiextendsProductwithSerializable" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" />
+      </a>
+    </span>
+      
+    </li><li name="com.mapcode.scala.UnknownMapcodeException" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="UnknownMapcodeExceptionextendsExceptionwithProductwithSerializable"></a>
+      <a id="UnknownMapcodeException:UnknownMapcodeException"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="UnknownMapcodeException.html"><span class="name">UnknownMapcodeException</span></a><span class="params">(<span name="message">message: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Exception">Exception</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#com.mapcode.scala.package@UnknownMapcodeExceptionextendsExceptionwithProductwithSerializable" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Thrown when a mapcode is syntactically correct, but does not map to a coordinate.</p>
+    </li></ol>
+            </div>
+
+        
+
+        <div id="values" class="values members">
+              <h3>Value Members</h3>
+              <ol><li name="com.mapcode.scala.Mapcode" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Mapcode"></a>
+      <a id="Mapcode:Mapcode"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Mapcode$.html"><span class="name">Mapcode</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#com.mapcode.scala.package@Mapcode" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" />
+      </a>
+    </span>
+      
+    </li><li name="com.mapcode.scala.MapcodeCodec" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="MapcodeCodec"></a>
+      <a id="MapcodeCodec:MapcodeCodec"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="MapcodeCodec$.html"><span class="name">MapcodeCodec</span></a>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#com.mapcode.scala.package@MapcodeCodec" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">This class is the external Scala interface for encoding and decoding mapcodes.</p>
+    </li><li name="com.mapcode.scala.NameFormat" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="NameFormat"></a>
+      <a id="NameFormat:NameFormat"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="NameFormat$.html"><span class="name">NameFormat</span></a><span class="result"> extends <span class="extype" name="scala.Enumeration">Enumeration</span></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#com.mapcode.scala.package@NameFormat" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Enumeration that specifies the format for mapcodes.</p>
+    </li><li name="com.mapcode.scala.ParentTerritory" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="ParentTerritory"></a>
+      <a id="ParentTerritory:ParentTerritory"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="ParentTerritory$.html"><span class="name">ParentTerritory</span></a>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#com.mapcode.scala.package@ParentTerritory" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">This class defines &quot;parent territories&quot; for territories that have multiple territory codes.</p><div class="fullcomment"><div class="comment cmt"><p>This class defines &quot;parent territories&quot; for territories that have multiple territory codes. In other words,
+Countries that have states or provinces that are fairly first-class, e.g. USA.
+</p></div></div>
+    </li><li name="com.mapcode.scala.Territory" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Territory"></a>
+      <a id="Territory:Territory"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Territory$.html"><span class="name">Territory</span></a><span class="result"> extends <span class="extype" name="scala.Enumeration">Enumeration</span> with <a href="TerritoryOperations.html" class="extype" name="com.mapcode.scala.TerritoryOperations">TerritoryOperations</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../index.html#com.mapcode.scala.package@Territory" title="Permalink" target="_top">
+        <img src="../../../lib/permalink.png" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">This class defines the available territory codes as used by mapcode.</p>
+    </li></ol>
+            </div>
+
+        
+
+        
+        </div>
+
+        <div id="inheritedMembers">
+        
+        
+        </div>
+
+        <div id="groupedMembers">
+        <div class="group" name="Ungrouped">
+              <h3>Ungrouped</h3>
+              
+            </div>
+        </div>
+
+      </div>
+
+      <div id="tooltip"></div>
+
+      <div id="footer">  </div>
+
+
+    </body>
+      </html>
