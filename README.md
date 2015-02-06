@@ -1,6 +1,6 @@
 # Mapcode Library for Scala
 
-Copyright (C) 2014 Stichting Mapcode Foundation (http://www.mapcode.com)
+Copyright (C) 2014-2015 Stichting Mapcode Foundation (http://www.mapcode.com)
 
 ----
 
@@ -35,7 +35,7 @@ To work in a continuous compile & test loop, run the sbt CLI:
 	[info] Loading global plugins from /Users/ebowman/.sbt/0.13/plugins
 	[info] Loading project definition from /Users/ebowman/src/mapcode-scala/project
 	[info] Set current project to mapcode-scala (in build file:/Users/ebowman/src/mapcode-scala/)
-	> 
+	>
 
 Then from there, you can leave sbt in a continuous “detect changes and compile and run the tests” loop like:
 
@@ -68,7 +68,7 @@ If you're using IntelliJ IDEA, filter:
 If you're using Eclips, filter:
 `.classpath .project .settings .cache`
 
-If you're using NetBeans, filter: 
+If you're using NetBeans, filter:
 `nb-configuration.xml *.orig`
 
 The local `.gitignore` file in the Git repository itself to reflect those file only that are produced by executing
