@@ -1,12 +1,8 @@
-
 name := "mapcode-scala"
-
 organization := "com.mapcode"
-
 version := "1.40.3-SNAPSHOT"
 
-scalaVersion := "2.11.2"
-
+scalaVersion := "2.11.5"
 scalacOptions ++= Seq("-feature")
 
 // easier to work with snapshots during testing
@@ -20,9 +16,7 @@ libraryDependencies ++= Seq(
   "org.scalacheck" %% "scalacheck" % "1.11.6" % "test"
 )
 
-instrumentSettings
-
-ScoverageKeys.excludedPackages in ScoverageCompile := "com\\.mapcode\\.scala\\.Territory"
-
-ScoverageKeys.highlighting := true
+import ScoverageSbtPlugin.ScoverageKeys._
+coverageExcludedPackages := "com\\.mapcode\\.scala\\.Territory"
+coverageHighlighting := true
 
