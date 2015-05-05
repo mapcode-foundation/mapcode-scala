@@ -82,6 +82,9 @@ private[scala] object Encoder {
                   }
                   val newResult: Mapcode = Mapcode(mapcode.get, encodeTerritory)
                   if (!results.contains(newResult)) {
+                    if (limitToOneResult) {
+                      results.clear()
+                    }
                     results += newResult
                   }
                   else {
