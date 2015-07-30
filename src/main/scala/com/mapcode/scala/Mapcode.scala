@@ -15,63 +15,87 @@
  */
 package com.mapcode.scala
 
+import com.mapcode.{Mapcode => JMapCode, Territory, Alphabet}
+
 /**
- * This class defines a single mapcode encoding result, including the mapcode itself and the
+ * This class defines a single mapcode encoding result, including the alphanumeric code and the
  * territory definition.
  *
- * Note that the constructor will throw an `IllegalArgumentException` if the syntax of the mapcode
- * is not correct. The mapcode is not checked for validity, other than its syntax.
+ * On terminology, mapcode territory and mapcode code:
  *
- * @param mapcodePrecision0  The Mapcode string (without territory information) with standard precision.
- *                           The returned mapcode does not include the '-' separator and additional digits.
- *                           The precision is approximately 5 meters. The precision is defined as the maximum distance
- *                           to the (latitude, longitude) pair that encoded to this mapcode, which means the mapcode
- *                           defines an area of approximately 10 x 10 meters (100 m2).
- * @param mapcodePrecision1  The medium-precision mapcode string (without territory information).
- *                           The returned mapcode includes the '-' separator and 1 additional digit, if available.
- *                           If a medium precision code is not available, the regular mapcode is returned.
- *                           The returned precision is approximately 1 meter. The precision is defined as the maximum
- *                           distance to the (latitude, longitude) pair that encoded to this mapcode, which means the
- *                           mapcode defines an area of approximately 2 x 2 meters (4 m2).
- * @param mapcodePrecision2  The high-precision mapcode string (without territory information).
- *                           The returned mapcode includes the '-' separator and 2 additional digits, if available.
- *                           If a high precision code is not available, the regular mapcode is returned.
- *                           The returned precision is approximately 16 centimeters. The precision is defined as the
- *                           maximum distance to the (latitude, longitude) pair that encoded to this mapcode, which
- *                           means the mapcode defines an area of approximately 32 x 32 centimeters (0.1 m2).
- * @param territory          The territory in which this mapcode can be found, typically either a country or a state or
- *                           province.
+ * In written form. a mapcode is defined as an alphanumeric code, optionally preceded by a
+ * territory code.
+ *
+ * For example: "NLD 49.4V" is a mapcode, but "49.4V" is a mapcode as well, The latter is called
+ * a "local" mapcode, because it is not internationally unambiguous unless preceded by a territory
+ * code.
+ *
+ * For "NLD 49.4V" the "NLD"-part is called "the territory" and the "49.4V"-part is called
+ * "the code" (which are both part of "the mapcode").
+ *
+ * This distinction between "territory" and "code" in a mapcode is why the interface of this class
+ * has been changed from version 1.50.0 to reflect this terminology.
+ *
+ * On alphabets:
+ *
+ * Mapcode codes can be represented in different alphabets. Note that an alphabet is something else
+ * than a locale or a language. The supported alphabets for mapcodes are listed in [[com.mapcode.Alphabet]].
+ *
+ * Mapcode objects provide methods to obtain the mapcode code in a specific alphabet. By default,
+ * the [[com.mapcode.Alphabet#ROMAN]] is used.
+ *
+ * @param code      Code of mapcode.
+ * @param territory Territory.
  */
+case class Mapcode(code: String, territory: Territory) {
 
-case class Mapcode private[scala](mapcodePrecision0: String,
-                                  mapcodePrecision1: String,
-                                  mapcodePrecision2: String,
-                                  territory: Territory.Territory) {
-
-  def mapcode: String = mapcodePrecision0
+  private val delegate = new JMapCode(code, territory)
 
   /**
-   * Return the local mapcode string, potentially ambiguous.
+   * Get the Mapcode string (without territory information) with standard precision.
+   * The returned mapcode does not include the '-' separator and additional digits.
    *
-   * Example:
-   * 49.4V
+   * The returned precision is approximately 5 meters. The precision is defined as the maximum distance to the
+   * (latitude, longitude) pair that encoded to this mapcode, which means the mapcode defines an area of
+   * approximately 10 x 10 meters (100 m2).
    *
-   * @return Local mapcode.
+   * @param alphabet Alphabet.
+   * @return Mapcode string.
    */
-  def asLocal: String = mapcodePrecision0
+  def code(alphabet: Alphabet): String =
+    delegate.getCode(alphabet)
+
+  def code(precision: Int, alphabet: Alphabet): String =
+    delegate.getCode(precision, alphabet)
+
+  def code(precision: Int): String =
+    delegate.getCode(precision)
 
   /**
-   * Return the full international mapcode, including the full name of the territory and the Mapcode itself.
-   * The format of the code is:
-   * full-territory-name mapcode
+   * Return the full international mapcode, including the full name of the territory and the mapcode code itself.
+   * The format of the string is:
+   * full-territory-name cde
    *
    * Example:
    * Netherlands 49.4V           (regular code)
    * Netherlands 49.4V-K2        (high precision code)
    *
+   * @param precision Precision specifier. Range: [0, 2].
+   * @param alphabet  Alphabet.
    * @return Full international mapcode.
+   * @throws IllegalArgumentException Thrown if precision is out of range (must be in [0, 2]).
    */
-  def asInternationalFullName: String = s"${territory.fullName} $mapcodePrecision0"
+  def codeWithTerritoryFullname(precision: Int, alphabet: Alphabet): String =
+    delegate.getCodeWithTerritoryFullname(precision, alphabet)
+
+  def codeWithTerritoryFullname(precision: Int): String =
+    delegate.getCodeWithTerritoryFullname(precision)
+
+  def codeWithTerritoryFullname(alphabet: Alphabet): String =
+    delegate.getCodeWithTerritoryFullname(alphabet)
+
+  def codeWithTerritoryFullname: String =
+    delegate.getCodeWithTerritoryFullname
 
   /**
    * Return the international mapcode as a shorter version using the ISO territory codes where possible.
@@ -83,9 +107,22 @@ case class Mapcode private[scala](mapcodePrecision0: String,
    * NLD 49.4V                   (regular code)
    * NLD 49.4V-K2                (high-precision code)
    *
+   * @param precision Precision specifier. Range: [0, 2].
+   * @param alphabet  Alphabet.
    * @return Short-hand international mapcode.
+   * @throws IllegalArgumentException Thrown if precision is out of range (must be in [0, 2]).
    */
-  def asInternationalISO: String = s"${territory.name} $mapcodePrecision0"
+  def codeWithTerritory(precision: Int, alphabet: Alphabet): String =
+    delegate.getCodeWithTerritory(precision, alphabet)
+
+  def codeWithTerritory(precision: Int): String =
+    delegate.getCodeWithTerritory(precision)
+
+  def codeWithTerritory(alphabet: Alphabet): String =
+    delegate.getCodeWithTerritory(alphabet)
+
+  def codeWithTerritory: String =
+    delegate.getCodeWithTerritory
 }
 
 object Mapcode {
