@@ -17,6 +17,8 @@ package com.mapcode.scala
 
 import com.mapcode.{Alphabet, Mapcode => JMapcode, Territory, UnknownPrecisionFormatException}
 
+import scala.util.matching.Regex
+
 /**
  * This class defines a single mapcode encoding result, including the alphanumeric code and the
  * territory definition.
@@ -146,7 +148,7 @@ object Mapcode {
    * This regular expression is used to check mapcode format strings.
    * They've been made public to allow others to use the correct regular expressions as well.
    */
-  val RegexMapCode = JMapcode.REGEX_MAPCODE.r
+  val REGEX_MAPCODE: Regex = JMapcode.REGEX_MAPCODE.r
 
   /**
    * This enum describes the types of available mapcodes (as returned by [[com.mapcode.scala.Mapcode#precisionFormat(String)]].
@@ -220,5 +222,11 @@ object Mapcode {
    */
   def unapply(mapcode: Mapcode): Option[(String, Territory)] =
     Some((mapcode.code, mapcode.territory))
+
+  implicit def fromJava(mapcode: JMapcode): Mapcode =
+    Mapcode(mapcode)
+
+  implicit def toJava(mapcode: Mapcode): JMapcode =
+    new JMapcode(mapcode.code, mapcode.territory)
 }
 
