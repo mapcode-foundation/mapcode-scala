@@ -24,22 +24,6 @@ class PointTest extends FunSuite with Matchers with GeneratorDrivenPropertyCheck
 
   val DELTA = 0.000001
 
-  test("invalidPoint") {
-    val point = Point.undefined
-    point.isDefined shouldBe false
-  }
-
-  test("validPoint") {
-    val point = Point.fromMicroDeg(2, 1)
-    point.isDefined shouldBe true
-  }
-
-  test("pointStored") {
-    val point = Point.fromMicroDeg(2, 1)
-    point.lonMicroDeg should be(1)
-    point.latMicroDeg should be(2)
-  }
-
   test("testDegreesLatToMeters") {
     Point.degreesLatToMeters(0) should be(0d)
     Point.degreesLatToMeters(0.5) should be(Point.METERS_PER_DEGREE_LAT / 2d)

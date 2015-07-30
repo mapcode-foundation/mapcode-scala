@@ -55,7 +55,7 @@ import scala.util.matching.Regex
  *   }
  * }}}
  */
-case class Mapcode private (delegate: JMapcode) {
+class Mapcode private (delegate: JMapcode) {
 
   /**
    * Get the Mapcode string (without territory information) with standard precision.
@@ -137,6 +137,12 @@ case class Mapcode private (delegate: JMapcode) {
 
   def territory =
     delegate.getTerritory
+
+  override def equals(other: Any) =
+    delegate.equals(other)
+
+  override def hashCode =
+    delegate.hashCode
 
   override def toString =
     delegate.toString
@@ -224,7 +230,7 @@ object Mapcode {
     Some((mapcode.code, mapcode.territory))
 
   implicit def fromJava(mapcode: JMapcode): Mapcode =
-    Mapcode(mapcode)
+    new Mapcode(mapcode)
 
   implicit def toJava(mapcode: Mapcode): JMapcode =
     new JMapcode(mapcode.code, mapcode.territory)

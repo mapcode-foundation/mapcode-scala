@@ -15,6 +15,7 @@
  */
 package com.mapcode.scala
 
+import com.mapcode.Territory
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import org.scalatest.{FunSuite, Matchers}
 

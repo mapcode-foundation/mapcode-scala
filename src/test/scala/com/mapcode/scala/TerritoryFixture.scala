@@ -1,6 +1,6 @@
 package com.mapcode.scala
 
-object TerritoryFixture extends TerritoryOperations {
+object TerritoryFixture {
   val USA = Territory(409, "USA", None, Seq("US"), Seq("United States of America", "America"))
   val US_DC = Territory(342, "District of Columbia", Some(USA))
   val US_RI = Territory(343, "Rhode Island", Some(USA))

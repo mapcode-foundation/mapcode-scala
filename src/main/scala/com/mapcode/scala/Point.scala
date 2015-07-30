@@ -21,14 +21,22 @@ import scala.util.Random
 
 /**
  * This class defines a class for lat/lon points.
+ *
+ * Note that this class behaves like a {{{case class Point(latDeg: Double, lonDeg: Double)}}}.
  */
-case class Point private (delegate: JPoint) {
+class Point private (delegate: JPoint) {
 
   def latDeg: Double =
     delegate.getLatDeg
 
   def lonDeg: Double =
     delegate.getLonDeg
+
+  override def equals(other: Any) =
+    delegate.equals(other)
+
+  override def hashCode =
+    delegate.hashCode
 
   override def toString: String =
     delegate.toString
@@ -101,15 +109,15 @@ object Point {
     JPoint.metersToDegreesLonAtLat(eastMeters, lat)
 
   def apply(latDeg: Double, lonDeg: Double) =
-    Point(new JPoint(latDeg, lonDeg))
+    new Point(JPoint.fromDeg(latDeg, lonDeg))
 
   def unapply(point: Point): Option[(Double, Double)] =
     Some((point.latDeg, point.lonDeg))
 
   implicit def fromJava(point: JPoint): Point =
-    Point(point)
+    new Point(point)
 
   implicit def toJava(point: Point): JPoint =
-    new JPoint(point)
+    JPoint.fromDeg(point.latDeg, point.lonDeg)
 }
 
