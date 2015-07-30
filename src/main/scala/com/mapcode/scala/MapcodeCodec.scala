@@ -15,7 +15,7 @@
  */
 package com.mapcode.scala
 
-import com.mapcode.{MapcodeCodec => JMapcodeCodec, _}
+import com.mapcode.{MapcodeCodec => JMapcodeCodec, UnknownPrecisionFormatException, UnknownMapcodeException, Territory}
 import _root_.scala.collection.JavaConversions._
 
 object MapcodeCodec {
