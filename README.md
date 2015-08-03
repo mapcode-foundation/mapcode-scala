@@ -21,6 +21,8 @@ limitations under the License.
 Original C library created by Pieter Geelen. Work on Java version
 of the mapcode library by Rijn Buve and Matthew Lowden.
 
+Scala version developed by Eric Bowman and Ruud Diterwich.
+
 # Getting started
 
 This library uses scala. To develop, you need [sbt](http://http://www.scala-sbt.org/).
