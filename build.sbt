@@ -11,7 +11,7 @@ resolvers += Resolver.mavenLocal
 libraryDependencies ++= Seq(
   "org.slf4j" % "slf4j-api" % "1.7.2",
   "org.slf4j" % "slf4j-log4j12" % "1.7.2" % "test",
-  // "com.mapcode" % "mapcode" % "1.40.3-SNAPSHOT",
+  "com.mapcode" % "mapcode" % "2.0.1" withSources(),
   "org.scalatest" %% "scalatest" % "2.2.1" % "test",
   "org.scalacheck" %% "scalacheck" % "1.11.6" % "test"
 )
