@@ -15,8 +15,9 @@
  */
 package com.mapcode.scala
 
-import com.mapcode.{MapcodeCodec => JMapcodeCodec, UnknownPrecisionFormatException, UnknownMapcodeException, Territory}
-import _root_.scala.collection.JavaConversions._
+import com.mapcode.{MapcodeCodec => JMapcodeCodec, Territory, UnknownMapcodeException, UnknownPrecisionFormatException}
+
+import scala.collection.JavaConverters._
 
 object MapcodeCodec {
 
@@ -38,11 +39,9 @@ object MapcodeCodec {
    * @return Non-empty, ordered list of mapcode information records, see [[Mapcode]].
    * @throws IllegalArgumentException Thrown if latitude or longitude are out of range.
    */
-  def encode(latDeg: Double, lonDeg: Double): Seq[Mapcode] =
-    JMapcodeCodec.encode(latDeg, lonDeg).map(Mapcode.fromJava)
+  def encode(latDeg: Double, lonDeg: Double): Seq[Mapcode] = JMapcodeCodec.encode(latDeg, lonDeg).asScala.map(_.asScala)
 
-  def encode(point: Point): Seq[Mapcode] =
-    JMapcodeCodec.encode(point).map(Mapcode.fromJava)
+  def encode(point: Point): Seq[Mapcode] = JMapcodeCodec.encode(point.asJava).asScala.map(_.asScala)
 
   /**
    * Encode a lat/lon pair to a mapcode with territory information, for a specific territory. This produces a
@@ -58,14 +57,16 @@ object MapcodeCodec {
    * @param lonDeg              Longitude, accepted range: -180..180 (wrapped to this range if outside).
    * @param restrictToTerritory Try to encode only within this territory, see { @link Territory}. May be null.
    * @return List of mapcode information records, see { @link Mapcode}. This list is empty if no
-   *                                                          Mapcode can be generated for this territory matching the lat/lon.
+   *         Mapcode can be generated for this territory matching the lat/lon.
    * @throws IllegalArgumentException Thrown if latitude or longitude are out of range.
    */
-  def encode(latDeg: Double, lonDeg: Double, restrictToTerritory: Territory): Seq[Mapcode] =
-    JMapcodeCodec.encode(latDeg, lonDeg, restrictToTerritory).map(Mapcode.fromJava)
+  def encode(latDeg: Double, lonDeg: Double, restrictToTerritory: Territory): Seq[Mapcode] = {
+    JMapcodeCodec.encode(latDeg, lonDeg, restrictToTerritory).asScala.map(_.asScala)
+  }
 
-  def encode(point: Point, restrictToTerritory: Territory): Seq[Mapcode] =
-    JMapcodeCodec.encode(point, restrictToTerritory).map(Mapcode.fromJava)
+  def encode(point: Point, restrictToTerritory: Territory): Seq[Mapcode] = {
+    JMapcodeCodec.encode(point.asJava, restrictToTerritory).asScala.map(_.asScala)
+  }
 
   /**
    * Encode a lat/lon pair to its shortest mapcode with territory information.
@@ -77,11 +78,13 @@ object MapcodeCodec {
    * @throws IllegalArgumentException Thrown if latitude or longitude are out of range.
    * @throws UnknownMapcodeException  Thrown if no mapcode was found for the lat/lon matching the territory.
    */
-  def encodeToShortest(latDeg: Double, lonDeg: Double, restrictToTerritory: Territory): Mapcode =
-    JMapcodeCodec.encodeToShortest(latDeg, lonDeg, restrictToTerritory)
+  def encodeToShortest(latDeg: Double, lonDeg: Double, restrictToTerritory: Territory): Mapcode = {
+    JMapcodeCodec.encodeToShortest(latDeg, lonDeg, restrictToTerritory).asScala
+  }
 
-  def encodeToShortest(point: Point, restrictToTerritory: Territory): Mapcode =
-    JMapcodeCodec.encodeToShortest(point, restrictToTerritory)
+  def encodeToShortest(point: Point, restrictToTerritory: Territory): Mapcode = {
+    JMapcodeCodec.encodeToShortest(point.asJava, restrictToTerritory).asScala
+  }
 
   /**
    * Encode a lat/lon pair to its unambiguous, international mapcode.
@@ -91,11 +94,13 @@ object MapcodeCodec {
    * @return International unambiguous mapcode (always exists), see { @link Mapcode}.
    * @throws IllegalArgumentException Thrown if latitude or longitude are out of range.
    */
-  def encodeToInternational(latDeg: Double, lonDeg: Double): Mapcode =
-    JMapcodeCodec.encodeToInternational(latDeg, lonDeg)
+  def encodeToInternational(latDeg: Double, lonDeg: Double): Mapcode = {
+    JMapcodeCodec.encodeToInternational(latDeg, lonDeg).asScala
+  }
 
-  def encodeToInternational(point: Point): Mapcode =
-    JMapcodeCodec.encodeToInternational(point)
+  def encodeToInternational(point: Point): Mapcode = {
+    JMapcodeCodec.encodeToInternational(point.asJava).asScala
+  }
 
   /**
    * ------------------------------------------------------------------------------------------
@@ -117,8 +122,7 @@ object MapcodeCodec {
    * @throws UnknownPrecisionFormatException Thrown if the precision format is incorrect.
    * @throws IllegalArgumentException        Thrown if arguments are null, or if the syntax of the mapcode is incorrect.
    */
-  def decode(mapcode: String): Point =
-    JMapcodeCodec.decode(mapcode)
+  def decode(mapcode: String): Point = JMapcodeCodec.decode(mapcode).asScala
 
   /**
    * Decode a mapcode to a Point. A reference territory is supplied for disambiguation (only used if applicable).
@@ -136,8 +140,9 @@ object MapcodeCodec {
    * @throws UnknownPrecisionFormatException Thrown if the precision format is incorrect.
    * @throws IllegalArgumentException        Thrown if arguments are null, or if the syntax of the mapcode is incorrect.
    */
-  def decode(mapcode: String, defaultTerritoryContext: Territory): Point =
-    JMapcodeCodec.decode(mapcode, defaultTerritoryContext)
+  def decode(mapcode: String, defaultTerritoryContext: Territory): Point = {
+    JMapcodeCodec.decode(mapcode, defaultTerritoryContext).asScala
+  }
 }
 
 

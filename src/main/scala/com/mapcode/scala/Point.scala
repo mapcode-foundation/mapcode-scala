@@ -24,22 +24,17 @@ import scala.util.Random
  *
  * Note that this class behaves like a {{{case class Point(latDeg: Double, lonDeg: Double)}}}.
  */
-class Point private (delegate: JPoint) {
+class Point private[scala](delegate: JPoint) {
 
-  def latDeg: Double =
-    delegate.getLatDeg
+  def latDeg: Double = delegate.getLatDeg
 
-  def lonDeg: Double =
-    delegate.getLonDeg
+  def lonDeg: Double = delegate.getLonDeg
 
-  override def equals(other: Any) =
-    delegate.equals(other)
+  override def equals(other: Any) = delegate.equals(other)
 
-  override def hashCode =
-    delegate.hashCode
+  override def hashCode = delegate.hashCode
 
-  override def toString: String =
-    delegate.toString
+  override def toString: String = delegate.toString
 }
 
 object Point {
@@ -69,8 +64,7 @@ object Point {
    * @param lonDeg Latitude in degrees.
    * @return A defined point.
    */
-  def fromDeg(latDeg: Double, lonDeg: Double): Point =
-    JPoint.fromDeg(latDeg, lonDeg)
+  def fromDeg(latDeg: Double, lonDeg: Double): Point = JPoint.fromDeg(latDeg, lonDeg).asScala
 
   /**
    * Create a random point, uniformly distributed over the surface of the Earth.
@@ -78,8 +72,9 @@ object Point {
    * @param randomGenerator Random generator used to create a point.
    * @return Random point with uniform distribution over the sphere.
    */
-  def fromUniformlyDistributedRandomPoints(randomGenerator: Random): Point =
-    JPoint.fromUniformlyDistributedRandomPoints(randomGenerator.self)
+  def fromUniformlyDistributedRandomPoints(randomGenerator: Random): Point = {
+    JPoint.fromUniformlyDistributedRandomPoints(randomGenerator.self).asScala
+  }
 
   /**
    * Calculate the distance between two points. This algorithm does not take the curvature of the Earth into
@@ -89,28 +84,17 @@ object Point {
    * @param p2 Point 2.
    * @return Straight distance between p1 and p2. Only accurate for small distances up to 200 km.
    */
-  def distanceInMeters(p1: Point, p2: Point): Double =
-    JPoint.distanceInMeters(p1, p1)
+  def distanceInMeters(p1: Point, p2: Point): Double = JPoint.distanceInMeters(p1.asJava, p1.asJava)
 
-  def degreesLatToMeters(latDegrees: Double): Double =
-    JPoint.degreesLatToMeters(latDegrees)
+  def degreesLatToMeters(latDegrees: Double): Double = JPoint.degreesLatToMeters(latDegrees)
 
-  def degreesLonToMetersAtLat(lonDegrees: Double, lat: Double): Double =
-    JPoint.degreesLonToMetersAtLat(lonDegrees, lat)
+  def degreesLonToMetersAtLat(lonDegrees: Double, lat: Double): Double = JPoint.degreesLonToMetersAtLat(lonDegrees, lat)
 
-  def metersToDegreesLonAtLat(eastMeters: Double, lat: Double): Double =
-    JPoint.metersToDegreesLonAtLat(eastMeters, lat)
+  def metersToDegreesLonAtLat(eastMeters: Double, lat: Double): Double = JPoint.metersToDegreesLonAtLat(eastMeters, lat)
 
-  def apply(latDeg: Double, lonDeg: Double) =
-    new Point(JPoint.fromDeg(latDeg, lonDeg))
+  def apply(latDeg: Double, lonDeg: Double) = new Point(JPoint.fromDeg(latDeg, lonDeg))
 
-  def unapply(point: Point): Option[(Double, Double)] =
-    Some((point.latDeg, point.lonDeg))
+  def unapply(point: Point): Option[(Double, Double)] = Some((point.latDeg, point.lonDeg))
 
-  implicit def fromJava(point: JPoint): Point =
-    new Point(point)
-
-  implicit def toJava(point: Point): JPoint =
-    JPoint.fromDeg(point.latDeg, point.lonDeg)
 }
 

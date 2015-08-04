@@ -55,7 +55,7 @@ import scala.util.matching.Regex
  *   }
  * }}}
  */
-class Mapcode private (delegate: JMapcode) {
+class Mapcode private[mapcode](delegate: JMapcode) {
 
   /**
    * Get the Mapcode string (without territory information) with standard precision.
@@ -70,17 +70,13 @@ class Mapcode private (delegate: JMapcode) {
    * @return Mapcode string.
    * @throws IllegalArgumentException Thrown if precision is out of range (must be in [0, 8]).
    */
-  def code(precision: Int, alphabet: Alphabet): String =
-    delegate.getCode(precision, alphabet)
+  def code(precision: Int, alphabet: Alphabet): String = delegate.getCode(precision, alphabet)
 
-  def code(alphabet: Alphabet): String =
-    delegate.getCode(alphabet)
+  def code(alphabet: Alphabet): String = delegate.getCode(alphabet)
 
-  def code(precision: Int): String =
-    delegate.getCode(precision)
+  def code(precision: Int): String = delegate.getCode(precision)
 
-  def code =
-    delegate.getCode
+  def code = delegate.getCode
 
   /**
    * Return the full international mapcode, including the full name of the territory and the mapcode code itself.
@@ -96,17 +92,15 @@ class Mapcode private (delegate: JMapcode) {
    * @return Full international mapcode.
    * @throws IllegalArgumentException Thrown if precision is out of range (must be in [0, 8]).
    */
-  def codeWithTerritoryFullname(precision: Int, alphabet: Alphabet): String =
+  def codeWithTerritoryFullname(precision: Int, alphabet: Alphabet): String = {
     delegate.getCodeWithTerritoryFullname(precision, alphabet)
+  }
 
-  def codeWithTerritoryFullname(precision: Int): String =
-    delegate.getCodeWithTerritoryFullname(precision)
+  def codeWithTerritoryFullname(precision: Int): String = delegate.getCodeWithTerritoryFullname(precision)
 
-  def codeWithTerritoryFullname(alphabet: Alphabet): String =
-    delegate.getCodeWithTerritoryFullname(alphabet)
+  def codeWithTerritoryFullname(alphabet: Alphabet): String = delegate.getCodeWithTerritoryFullname(alphabet)
 
-  def codeWithTerritoryFullname: String =
-    delegate.getCodeWithTerritoryFullname
+  def codeWithTerritoryFullname: String = delegate.getCodeWithTerritoryFullname
 
   /**
    * Return the international mapcode as a shorter version using the ISO territory codes where possible.
@@ -123,43 +117,36 @@ class Mapcode private (delegate: JMapcode) {
    * @return Short-hand international mapcode.
    * @throws IllegalArgumentException Thrown if precision is out of range (must be in [0, 8]).
    */
-  def codeWithTerritory(precision: Int, alphabet: Alphabet): String =
+  def codeWithTerritory(precision: Int, alphabet: Alphabet): String = {
     delegate.getCodeWithTerritory(precision, alphabet)
+  }
 
-  def codeWithTerritory(precision: Int): String =
-    delegate.getCodeWithTerritory(precision)
+  def codeWithTerritory(precision: Int): String = delegate.getCodeWithTerritory(precision)
 
-  def codeWithTerritory(alphabet: Alphabet): String =
-    delegate.getCodeWithTerritory(alphabet)
+  def codeWithTerritory(alphabet: Alphabet): String = delegate.getCodeWithTerritory(alphabet)
 
-  def codeWithTerritory: String =
-    delegate.getCodeWithTerritory
+  def codeWithTerritory: String = delegate.getCodeWithTerritory
 
-  def territory =
-    delegate.getTerritory
+  def territory = delegate.getTerritory
 
-  override def equals(other: Any) =
-    delegate.equals(other)
+  override def equals(other: Any) = delegate.equals(other)
 
-  override def hashCode =
-    delegate.hashCode
+  override def hashCode = delegate.hashCode
 
-  override def toString =
-    delegate.toString
+  override def toString = delegate.toString
 }
 
 object Mapcode {
 
   /**
+   * This enum describes the types of available mapcodes (as returned by [[com.mapcode.scala.Mapcode#precisionFormat(String)]].
+   */
+  type PrecisionFormat = JMapcode.PrecisionFormat
+  /**
    * This regular expression is used to check mapcode format strings.
    * They've been made public to allow others to use the correct regular expressions as well.
    */
   val REGEX_MAPCODE: Regex = JMapcode.REGEX_MAPCODE.r
-
-  /**
-   * This enum describes the types of available mapcodes (as returned by [[com.mapcode.scala.Mapcode#precisionFormat(String)]].
-   */
-  type PrecisionFormat = JMapcode.PrecisionFormat
 
   /**
    * This method return the mapcode type, given a mapcode string. If the mapcode string has an invalid
@@ -172,8 +159,7 @@ object Mapcode {
    * @return Type of mapcode code format.
    * @throws UnknownPrecisionFormatException If precision format is incorrect.
    */
-  def precisionFormat(mapcode: String): PrecisionFormat =
-    JMapcode.getPrecisionFormat(mapcode)
+  def precisionFormat(mapcode: String): PrecisionFormat = JMapcode.getPrecisionFormat(mapcode)
 
   /**
    * This method provides a shortcut to checking if a mapcode string is formatted properly or not at all.
@@ -183,8 +169,7 @@ object Mapcode {
    *         actually a valid  mapcode representing a location on Earth.
    * @throws IllegalArgumentException If mapcode is null.
    */
-  def isValidPrecisionFormat(mapcode: String): Boolean =
-    JMapcode.isValidPrecisionFormat(mapcode)
+  def isValidPrecisionFormat(mapcode: String): Boolean = JMapcode.isValidPrecisionFormat(mapcode)
 
   /**
    * Returns whether the mapcode contains territory information or not.
@@ -193,8 +178,7 @@ object Mapcode {
    * @return True if mapcode contains territory information.
    * @throws IllegalArgumentException If mapcode has incorrect syntax.
    */
-   def containsTerritory(mapcode: String): Boolean =
-     JMapcode.containsTerritory(mapcode)
+  def containsTerritory(mapcode: String): Boolean = JMapcode.containsTerritory(mapcode)
 
   /**
    * Get a safe maximum for the distance between a decoded mapcode and its original
@@ -207,8 +191,7 @@ object Mapcode {
    * @param precision Precision of mapcode.
    * @return Maximum offset in meters.
    */
-  def safeMaxOffsetInMeters(precision: Int): Double =
-    JMapcode.getSafeMaxOffsetInMeters(precision)
+  def safeMaxOffsetInMeters(precision: Int): Double = JMapcode.getSafeMaxOffsetInMeters(precision)
 
   /**
    * Public constructor for Mapcode.
@@ -218,21 +201,13 @@ object Mapcode {
    *                                  territory information.
    * @return Mapcode instance
    */
-  def apply(code: String, territory: Territory): Mapcode =
-    Mapcode(code, territory)
+  def apply(code: String, territory: Territory): Mapcode = Mapcode(code, territory)
 
   /**
    * Allows pattern matching for Mapcode instances as if it were a case class.
    * @param mapcode Mapcode to match
    * @return Code and territory fields of the mapcode.
    */
-  def unapply(mapcode: Mapcode): Option[(String, Territory)] =
-    Some((mapcode.code, mapcode.territory))
-
-  implicit def fromJava(mapcode: JMapcode): Mapcode =
-    new Mapcode(mapcode)
-
-  implicit def toJava(mapcode: Mapcode): JMapcode =
-    new JMapcode(mapcode.code, mapcode.territory)
+  def unapply(mapcode: Mapcode): Option[(String, Territory)] = Some((mapcode.code, mapcode.territory))
 }
 
