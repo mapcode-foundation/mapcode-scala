@@ -20,3 +20,33 @@ libraryDependencies ++= Seq(
 import ScoverageSbtPlugin.ScoverageKeys._
 coverageExcludedPackages := "com\\.mapcode\\.scala\\.Territory"
 coverageHighlighting := true
+
+licenses := Seq("The Apache Software Licence, Version 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0"))
+homepage := Some(url("https://github.com/mapcode-foundation/mapcode-scala"))
+pomIncludeRepository := { _ => false }
+publishMavenStyle := true
+publishArtifact in Test := false
+credentials += Credentials(Path.userHome / ".sbt" / "0.13" / "sonatype.sbt")
+pomExtra := <scm>
+  <connection>scm:git:git@github.com:mapcode-foundation/mapcode-scala.git</connection>
+  <url>https://github.com/mapcode-foundation/mapcode-scala</url>
+</scm>
+  <developers>
+    <developer>
+      <id>ericbowman</id>
+      <name>Eric Bowman</name>
+    </developer>
+    <developer>
+      <id>ruudditerwich</id>
+      <name>Ruud Diterwich</name>
+      <url>https://github.com/rditerwich</url>
+    </developer>
+  </developers>
+
+publishTo <<= version { (v: String) =>
+  val nexus = "https://oss.sonatype.org/"
+  if (v.trim.endsWith("SNAPSHOT"))
+    Some("snapshots" at nexus + "content/repositories/snapshots")
+  else
+    Some("releases"  at nexus + "service/local/staging/deploy/maven2")
+}
