@@ -1,8 +1,9 @@
 name := "mapcode-scala"
 organization := "com.mapcode"
-version := "2.0.0-SNAPSHOT"
+version := "2.0.1"
 
 scalaVersion := "2.11.7"
+crossScalaVersions := Seq("2.11.7", "2.10.4")
 scalacOptions ++= Seq("-feature")
 
 // easier to work with snapshots during testing
@@ -16,10 +17,6 @@ libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "2.2.1" % "test",
   "org.scalacheck" %% "scalacheck" % "1.11.6" % "test"
 )
-
-import ScoverageSbtPlugin.ScoverageKeys._
-coverageExcludedPackages := "com\\.mapcode\\.scala\\.Territory"
-coverageHighlighting := true
 
 licenses := Seq("The Apache Software Licence, Version 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0"))
 homepage := Some(url("https://github.com/mapcode-foundation/mapcode-scala"))
