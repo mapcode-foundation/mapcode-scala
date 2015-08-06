@@ -45,15 +45,15 @@ object EncodeDecodeTest extends Matchers {
         def log(msg: => String) = if ((i % LogEvery) == 0) println(msg)
         var found = false
         val encode = Point.fromUniformlyDistributedRandomPoints(randomGenerator)
-        for (territory <- Territory.territories) {
+        for (territory <- Territory.values) {
           val (latDeg, lonDeg) = (encode.latDeg, encode.lonDeg)
           for (result <- MapcodeCodec.encode(latDeg, lonDeg, territory)) {
             found = true
-            result.territory should equal(territory)
-            val decoded = MapcodeCodec.decode(result.mapcode, territory)
-            val distance = encode.distanceInMeters(decoded)
+            result.territory should be(territory)
+            val decoded = MapcodeCodec.decode(result.code, territory)
+            val distance = Point.distanceInMeters(encode, decoded)
             distance should be < MaxErrorMeters
-            log( f"""#$i/$SampleSize $encode/$territory) -> ${result.mapcode} -> $decoded ($distance%1.2f m)""")
+            //log( f"""#$i/$SampleSize $encode/$territory) -> ${result.code} -> $decoded ($distance%1.2f m)""")
           }
         }
         found should be(right = true)
