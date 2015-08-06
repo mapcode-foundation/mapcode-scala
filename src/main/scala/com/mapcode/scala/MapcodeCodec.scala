@@ -15,7 +15,7 @@
  */
 package com.mapcode.scala
 
-import com.mapcode.{MapcodeCodec => JMapcodeCodec, UnknownPrecisionFormatException, UnknownMapcodeException, Territory}
+import com.mapcode.{MapcodeCodec => JMapcodeCodec, UnknownPrecisionFormatException, UnknownMapcodeException}
 import _root_.scala.collection.JavaConversions._
 
 object MapcodeCodec {
@@ -130,7 +130,7 @@ object MapcodeCodec {
    * Note that if a territory-code is supplied in the string, it takes preferences over the parameter.
    *
    * @param mapcode                 Mapcode.
-   * @param defaultTerritoryContext Default territory context for disambiguation purposes. May be null.
+   * @param defaultTerritoryContext Default territory context for disambiguation purposes.
    * @return Point corresponding to mapcode. Latitude range: -90..90, longitude range: -180..180.
    * @throws UnknownMapcodeException         Thrown if the mapcode has the right syntax, but cannot be decoded into a point.
    * @throws UnknownPrecisionFormatException Thrown if the precision format is incorrect.

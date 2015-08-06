@@ -15,7 +15,8 @@
  */
 package com.mapcode.scala
 
-import com.mapcode.{Alphabet, Mapcode => JMapcode, Territory, UnknownPrecisionFormatException}
+import scala.language.implicitConversions
+import com.mapcode.{Mapcode => JMapcode, UnknownPrecisionFormatException}
 
 import scala.util.matching.Regex
 
@@ -25,7 +26,7 @@ import scala.util.matching.Regex
  *
  * On terminology, mapcode territory and mapcode code:
  *
- * In written form. a mapcode is defined as an alphanumeric code, optionally preceded by a
+ * In written form, a mapcode is defined as an alphanumeric code, optionally preceded by a
  * territory code.
  *
  * For example: "NLD 49.4V" is a mapcode, but "49.4V" is a mapcode as well, The latter is called
@@ -55,7 +56,7 @@ import scala.util.matching.Regex
  *   }
  * }}}
  */
-class Mapcode private (delegate: JMapcode) {
+class Mapcode private (val delegate: JMapcode) {
 
   /**
    * Get the Mapcode string (without territory information) with standard precision.
@@ -135,7 +136,7 @@ class Mapcode private (delegate: JMapcode) {
   def codeWithTerritory: String =
     delegate.getCodeWithTerritory
 
-  def territory =
+  def territory: Territory =
     delegate.getTerritory
 
   override def equals(other: Any) =
@@ -155,11 +156,6 @@ object Mapcode {
    * They've been made public to allow others to use the correct regular expressions as well.
    */
   val REGEX_MAPCODE: Regex = JMapcode.REGEX_MAPCODE.r
-
-  /**
-   * This enum describes the types of available mapcodes (as returned by [[com.mapcode.scala.Mapcode#precisionFormat(String)]].
-   */
-  type PrecisionFormat = JMapcode.PrecisionFormat
 
   /**
    * This method return the mapcode type, given a mapcode string. If the mapcode string has an invalid
@@ -183,7 +179,7 @@ object Mapcode {
    *         actually a valid  mapcode representing a location on Earth.
    * @throws IllegalArgumentException If mapcode is null.
    */
-  def isValidPrecisionFormat(mapcode: String): Boolean =
+  def isValidMapcodeFormat(mapcode: String): Boolean =
     JMapcode.isValidPrecisionFormat(mapcode)
 
   /**
@@ -219,7 +215,7 @@ object Mapcode {
    * @return Mapcode instance
    */
   def apply(code: String, territory: Territory): Mapcode =
-    Mapcode(code, territory)
+    new JMapcode(code, territory)
 
   /**
    * Allows pattern matching for Mapcode instances as if it were a case class.
@@ -233,6 +229,30 @@ object Mapcode {
     new Mapcode(mapcode)
 
   implicit def toJava(mapcode: Mapcode): JMapcode =
-    new JMapcode(mapcode.code, mapcode.territory)
+    mapcode.delegate
+
+  /**
+   * This enum describes the types of available mapcodes (as returned by [[com.mapcode.scala.Mapcode#precisionFormat(String)]].
+   */
+  case class PrecisionFormat(delegate: JMapcode.PrecisionFormat) {
+
+    override def toString: String =
+      delegate.toString
+  }
+
+  object PrecisionFormat {
+    val PRECISION_0 = PrecisionFormat(JMapcode.PrecisionFormat.PRECISION_0)
+    val PRECISION_1 = PrecisionFormat(JMapcode.PrecisionFormat.PRECISION_1)
+    val PRECISION_2 = PrecisionFormat(JMapcode.PrecisionFormat.PRECISION_2)
+
+    def values: Seq[PrecisionFormat] =
+      JMapcode.PrecisionFormat.values.map(PrecisionFormat(_))
+
+    implicit def fromJava(format: JMapcode.PrecisionFormat): PrecisionFormat =
+      PrecisionFormat(format)
+
+    implicit def toJava(format: PrecisionFormat): JMapcode.PrecisionFormat =
+      format.delegate
+  }
 }
 

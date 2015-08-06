@@ -15,6 +15,7 @@
  */
 package com.mapcode.scala
 
+import scala.language.implicitConversions
 import com.mapcode.{Point => JPoint}
 
 import scala.util.Random
@@ -31,6 +32,9 @@ class Point private (delegate: JPoint) {
 
   def lonDeg: Double =
     delegate.getLonDeg
+
+  def distanceInMeters(p: Point): Double =
+    Point.distanceInMeters(this, p)
 
   override def equals(other: Any) =
     delegate.equals(other)
@@ -113,4 +117,3 @@ object Point {
   implicit def toJava(point: Point): JPoint =
     JPoint.fromDeg(point.latDeg, point.lonDeg)
 }
-
