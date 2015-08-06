@@ -18,7 +18,8 @@ package com.mapcode.scala
 import com.sun.org.apache.xml.internal.security.c14n.implementations.Canonicalizer20010315ExclOmitComments
 
 import scala.language.implicitConversions
-import com.mapcode.{Territory => JTerritory, ParentTerritory => JParentTerritory}
+import scala.collection.JavaConversions._
+import com.mapcode.{Territory => JTerritory}
 
 /**
  * This class defines the available territory codes as used by mapcode.
@@ -596,22 +597,14 @@ object Territory {
   val CPT = Territory(JTerritory.CPT)
   val AAA = Territory(JTerritory.AAA)
 
-  val parentTerritories = Seq(IND, AUS, BRA, USA, MEX, CAN, RUS, CHN)
+  val PARENT_TERRITORIES: Seq[Territory] =
+    JTerritory.PARENT_TERRITORIES.map(fromJava).toSeq
 
   def fromString(alphaCode: String): Territory =
     JTerritory.fromString(alphaCode)
 
   def fromString(alphaCode: String, parentTerritory: Territory): Territory =
-    JTerritory.fromString(alphaCode, parentTerritory match {
-      case IND => JParentTerritory.IND
-      case AUS => JParentTerritory.AUS
-      case BRA => JParentTerritory.BRA
-      case USA => JParentTerritory.USA
-      case MEX => JParentTerritory.MEX
-      case CAN => JParentTerritory.CAN
-      case RUS => JParentTerritory.RUS
-      case CHN => JParentTerritory.CHN
-    })
+    JTerritory.fromString(alphaCode, parentTerritory.delegate)
 
   def values: Seq[Territory] =
     JTerritory.values.map(Territory(_))

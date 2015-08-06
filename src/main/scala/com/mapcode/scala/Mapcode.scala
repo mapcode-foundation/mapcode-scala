@@ -180,7 +180,7 @@ object Mapcode {
    * @throws IllegalArgumentException If mapcode is null.
    */
   def isValidMapcodeFormat(mapcode: String): Boolean =
-    JMapcode.isValidPrecisionFormat(mapcode)
+    JMapcode.isValidMapcodeFormat(mapcode)
 
   /**
    * Returns whether the mapcode contains territory information or not.
