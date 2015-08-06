@@ -68,15 +68,10 @@ class MapcodeTest extends FunSuite with Matchers {
   }
 
   test("checkMapcodeFormatType") {
-    Mapcode.getMapcodeFormatType("ABC") should be(Mapcode.MapcodeFormat.Invalid)
-    Mapcode.getMapcodeFormatType("AA.BB") should be(Mapcode.MapcodeFormat.Precision0)
-    Mapcode.getMapcodeFormatType("AA.BB-1") should be(Mapcode.MapcodeFormat.Precision1)
-    Mapcode.getMapcodeFormatType("AA.BB-12") should be(Mapcode.MapcodeFormat.Precision2)
-  }
 
-  test("checkConvertToAscii") {
-    Mapcode.convertToAscii("\u30c1\u30ca.8\u30c1") should be("KM.8K")
-    Mapcode.convertToAscii("\u0397\u03a0.\u03982-\u0411") should be("HJ.Q2-Z")
+    Mapcode.precisionFormat("AA.BB") should be(Mapcode.PrecisionFormat.PRECISION_0)
+    Mapcode.precisionFormat("AA.BB-1") should be(Mapcode.PrecisionFormat.PRECISION_1)
+    Mapcode.precisionFormat("AA.BB-12") should be(Mapcode.PrecisionFormat.PRECISION_2)
   }
 
   test("invalid map code") {
