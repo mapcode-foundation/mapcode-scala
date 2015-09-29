@@ -1,6 +1,6 @@
 name := "mapcode-scala"
 organization := "com.mapcode"
-version := "2.0.2-SNAPSHOT"
+version := "2.2.2"
 
 scalaVersion := "2.11.7"
 crossScalaVersions := Seq("2.11.7", "2.10.4")
