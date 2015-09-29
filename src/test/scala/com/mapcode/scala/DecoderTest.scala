@@ -15,7 +15,7 @@
  */
 package com.mapcode.scala
 
-import com.mapcode.UnknownMapcodeException
+import com.mapcode.{UnknownPrecisionFormatException, UnknownMapcodeException}
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import org.scalatest.{FunSuite, Matchers}
 
@@ -23,7 +23,7 @@ class DecoderTest extends FunSuite with Matchers with GeneratorDrivenPropertyChe
 
   test("decodeMapcodeWithTerritory") {
     val point = MapcodeCodec.decode("49.4V", Territory.NLD)
-    52.376514 shouldBe point.latDeg
+    52.376514 shouldBe (point.latDeg +- 0.000001)
     4.908542 shouldBe (point.lonDeg +- 0.00001)
   }
 
@@ -58,7 +58,7 @@ class DecoderTest extends FunSuite with Matchers with GeneratorDrivenPropertyChe
   }
 
   test("invalidMapcode1") {
-    an[UnknownMapcodeException] should be thrownBy MapcodeCodec.decode("494.V494V", Territory.NLD)
+    an[UnknownPrecisionFormatException] should be thrownBy MapcodeCodec.decode("494.V494V", Territory.NLD)
   }
 
   test("invalidHighPrecisionCharacter") {

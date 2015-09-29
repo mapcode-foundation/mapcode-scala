@@ -28,16 +28,23 @@ class MapcodeTest extends FunSuite with Matchers {
     Mapcode.isValidMapcodeFormat("AAAA.BBB") shouldBe true
     Mapcode.isValidMapcodeFormat("AAAA.BBBB") shouldBe true
     Mapcode.isValidMapcodeFormat("AAAAA.BBBB") shouldBe true
-    Mapcode.isValidMapcodeFormat("AAAAA.BBBBB") shouldBe true
     Mapcode.isValidMapcodeFormat("AA.AA-0") shouldBe true
     Mapcode.isValidMapcodeFormat("AA.AA-01") shouldBe true
     Mapcode.isValidMapcodeFormat("AA.AA-A") shouldBe true
     Mapcode.isValidMapcodeFormat("AA.AA-AA") shouldBe true
     Mapcode.isValidMapcodeFormat("AA.AA-Y") shouldBe true
     Mapcode.isValidMapcodeFormat("AA.AA-1Y") shouldBe true
+    Mapcode.isValidMapcodeFormat("AA.AA-012") shouldBe true
+    Mapcode.isValidMapcodeFormat("AA.AA-0123") shouldBe true
+    Mapcode.isValidMapcodeFormat("AA.AA-01234") shouldBe true
+    Mapcode.isValidMapcodeFormat("AA.AA-012345") shouldBe true
+    Mapcode.isValidMapcodeFormat("AA.AA-0123456") shouldBe true
+    Mapcode.isValidMapcodeFormat("AA.AA-01234567") shouldBe true
   }
 
   test("checkInvalidMapcodeFormats") {
+    Mapcode.isValidMapcodeFormat("AA.AA-012345678") shouldBe false
+    Mapcode.isValidMapcodeFormat("AA.AA-0123456789") shouldBe false
     Mapcode.isValidMapcodeFormat("A") shouldBe false
     Mapcode.isValidMapcodeFormat("AB") shouldBe false
     Mapcode.isValidMapcodeFormat("AB.") shouldBe false
@@ -56,7 +63,6 @@ class MapcodeTest extends FunSuite with Matchers {
     Mapcode.isValidMapcodeFormat("00.01-") shouldBe false
     Mapcode.isValidMapcodeFormat("AAAAAA.BBBBB") shouldBe false
     Mapcode.isValidMapcodeFormat("AAAAA.BBBBBB") shouldBe false
-    Mapcode.isValidMapcodeFormat("AA.AA-012") shouldBe false
     Mapcode.isValidMapcodeFormat("AA.AA-Z") shouldBe false
     Mapcode.isValidMapcodeFormat("AA.AA-1Z") shouldBe false
     Mapcode.isValidMapcodeFormat("A.AAA") shouldBe false
@@ -69,9 +75,15 @@ class MapcodeTest extends FunSuite with Matchers {
 
   test("checkMapcodeFormatType") {
 
-    Mapcode.precisionFormat("AA.BB") should be(Mapcode.PrecisionFormat.PRECISION_0)
-    Mapcode.precisionFormat("AA.BB-1") should be(Mapcode.PrecisionFormat.PRECISION_1)
-    Mapcode.precisionFormat("AA.BB-12") should be(Mapcode.PrecisionFormat.PRECISION_2)
+    Mapcode.precisionFormat("AA.BB") should be(0)
+    Mapcode.precisionFormat("AA.BB-1") should be(1)
+    Mapcode.precisionFormat("AA.BB-12") should be(2)
+    Mapcode.precisionFormat("AA.BB-123") should be(3)
+    Mapcode.precisionFormat("AA.BB-1234") should be(4)
+    Mapcode.precisionFormat("AA.BB-12345") should be(5)
+    Mapcode.precisionFormat("AA.BB-123456") should be(6)
+    Mapcode.precisionFormat("AA.BB-1234567") should be(7)
+    Mapcode.precisionFormat("AA.BB-12345678") should be(8)
   }
 
   test("invalid map code") {

@@ -10,7 +10,7 @@ scalacOptions ++= Seq("-feature")
 resolvers += Resolver.mavenLocal
 
 libraryDependencies ++= Seq(
-  "com.mapcode" % "mapcode" % "2.0.2" withSources(),
+  "com.mapcode" % "mapcode" % "2.2.2" withSources(),
   "com.google.code.findbugs" % "jsr305" % "1.3.+",
   "org.slf4j" % "slf4j-api" % "1.7.2" % "test",
   "org.slf4j" % "slf4j-log4j12" % "1.7.2" % "test",

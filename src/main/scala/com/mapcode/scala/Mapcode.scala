@@ -165,10 +165,10 @@ object Mapcode {
    * check if the mapcode is really a valid mapcode representing a position on Earth.
    *
    * @param mapcode Mapcode (optionally with a territory).
-   * @return Type of mapcode code format.
+   * @return Type of mapcode precision format (0-8).
    * @throws UnknownPrecisionFormatException If precision format is incorrect.
    */
-  def precisionFormat(mapcode: String): PrecisionFormat =
+  def precisionFormat(mapcode: String): Integer =
     JMapcode.getPrecisionFormat(mapcode)
 
   /**
@@ -230,29 +230,5 @@ object Mapcode {
 
   implicit def toJava(mapcode: Mapcode): JMapcode =
     mapcode.delegate
-
-  /**
-   * This enum describes the types of available mapcodes (as returned by [[com.mapcode.scala.Mapcode#precisionFormat(String)]].
-   */
-  case class PrecisionFormat(delegate: JMapcode.PrecisionFormat) {
-
-    override def toString: String =
-      delegate.toString
-  }
-
-  object PrecisionFormat {
-    val PRECISION_0 = PrecisionFormat(JMapcode.PrecisionFormat.PRECISION_0)
-    val PRECISION_1 = PrecisionFormat(JMapcode.PrecisionFormat.PRECISION_1)
-    val PRECISION_2 = PrecisionFormat(JMapcode.PrecisionFormat.PRECISION_2)
-
-    def values: Seq[PrecisionFormat] =
-      JMapcode.PrecisionFormat.values.map(PrecisionFormat(_))
-
-    implicit def fromJava(format: JMapcode.PrecisionFormat): PrecisionFormat =
-      PrecisionFormat(format)
-
-    implicit def toJava(format: PrecisionFormat): JMapcode.PrecisionFormat =
-      format.delegate
-  }
 }
 
