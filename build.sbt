@@ -30,13 +30,19 @@ pomExtra := <scm>
 </scm>
   <developers>
     <developer>
-      <id>ericbowman</id>
+      <id>ebowman</id>
       <name>Eric Bowman</name>
+      <url>https://github.com/ebowman</url>
     </developer>
     <developer>
-      <id>ruudditerwich</id>
+      <id>rditerwich</id>
       <name>Ruud Diterwich</name>
       <url>https://github.com/rditerwich</url>
+    </developer>
+    <developer>
+      <id>rijnb</id>
+      <name>Rijn Buve</name>
+      <url>https://github.com/rijnb</url>
     </developer>
   </developers>
 
