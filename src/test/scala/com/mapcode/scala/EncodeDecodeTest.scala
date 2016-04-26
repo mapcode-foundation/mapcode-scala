@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015 Stichting Mapcode Foundation (http://www.mapcode.com)
+ * Copyright (C) 2014-2016 Stichting Mapcode Foundation (http://www.mapcode.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ object EncodeDecodeTestApp extends App {
 
 object EncodeDecodeTest extends Matchers {
   private final val SampleSize = 1000
-  private final val LogEvery = 500
   private final val MaxErrorMeters = 10d
 
   def doEncodeDecode(seed: Long) {
@@ -42,7 +41,6 @@ object EncodeDecodeTest extends Matchers {
     var i: Int = 0
     while (i < SampleSize) {
       {
-        def log(msg: => String) = if ((i % LogEvery) == 0) println(msg)
         var found = false
         val encode = Point.fromUniformlyDistributedRandomPoints(randomGenerator)
         for (territory <- Territory.values) {

@@ -1,6 +1,6 @@
 # Mapcode Library for Scala
 
-Copyright (C) 2014-2015 Stichting Mapcode Foundation (http://www.mapcode.com)
+Copyright (C) 2014-2016 Stichting Mapcode Foundation (http://www.mapcode.com)
 
 ----
 
@@ -27,23 +27,23 @@ This library uses scala. To develop, you need [sbt](http://http://www.scala-sbt.
 
 To run the tests:
 
-	$ sbt test
+    $ sbt test
 
 To work in a continuous compile & test loop, run the sbt CLI:
 
-	$ sbt
-	[info] Loading global plugins from /Users/ebowman/.sbt/0.13/plugins
-	[info] Loading project definition from /Users/ebowman/src/mapcode-scala/project
-	[info] Set current project to mapcode-scala (in build file:/Users/ebowman/src/mapcode-scala/)
-	>
+    $ sbt
+    [info] Loading global plugins from /Users/ebowman/.sbt/0.13/plugins
+    [info] Loading project definition from /Users/ebowman/src/mapcode-scala/project
+    [info] Set current project to mapcode-scala (in build file:/Users/ebowman/src/mapcode-scala/)
+    >
 
 Then from there, you can leave sbt in a continuous “detect changes and compile and run the tests” loop like:
 
-	> ~test
+    > ~test
 
 To generate a coverage report, we use [scoverage](https://github.com/scoverage/sbt-scoverage). You can run this and view the coverage report like:
 
-	$ sbt clean coverage test
+    $ sbt clean coverage test
 
 This will generate an HTML report in ``./target/scala-2.11/scoverage-report/index.html``.
 
